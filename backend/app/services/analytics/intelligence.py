@@ -9,8 +9,6 @@ from sqlalchemy import select, func, and_
 
 from app.models.conversation import Conversation, Message
 from app.models.customer import Customer
-from app.models.ticket import Ticket, Feedback
-from app.models.nlp import QuestionCluster, LoggedQuestion
 from app.models.knowledge import KBCollection, KBDocument
 from app.models.analytics import AIInsight, OrganizationalMemoryEntry, ExecutiveReport
 from app.schemas.analytics import KPIDashboardResponse, CopilotQueryResponse, ExecutiveReportExportResponse

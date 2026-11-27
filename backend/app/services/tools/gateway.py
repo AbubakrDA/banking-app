@@ -6,8 +6,7 @@ from typing import Dict, Any, List, Optional, Tuple, Callable
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.models.tool import ToolExecution, MCPServerConfig
-from app.models.business import Order, Appointment, Product, Service
+from app.models.tool import ToolExecution
 from app.schemas.tool import ToolDefinitionRead, ToolExecuteResponse
 
 
