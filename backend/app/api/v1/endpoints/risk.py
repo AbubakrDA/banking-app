@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.auth import AuthenticatedUser, require_roles, require_surface
 from app.models.banking import RiskAlert
@@ -77,6 +78,23 @@ async def update_risk_alert(
     await db.commit()
     return APIResponse.ok(
         data=RiskAlertRead.model_validate(alert),
+        request_id=getattr(request.state, "request_id", None),
+        tenant_id=current_user.tenant_id,
+    )
+
+
+@router.get("/sanctions/status", response_model=APIResponse[Dict[str, Any]])
+async def get_sanctions_status(
+    request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
+    current_user: AuthenticatedUser = Depends(require_roles("risk_officer", "admin")),
+) -> APIResponse[Dict[str, Any]]:
+    return APIResponse.ok(
+        data={
+            "sanctions_provider": "stub",
+            "cross_border_transfers_enabled": settings.ENABLE_CROSS_BORDER_TRANSFERS,
+            "sanctions_screening_approved": settings.ENABLE_SANCTIONS_SCREENING_APPROVED,
+        },
         request_id=getattr(request.state, "request_id", None),
         tenant_id=current_user.tenant_id,
     )

@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     HIGH_RISK_TRANSFER_MINOR: int = Field(default=100_000)
     LLM_PROVIDER: str = Field(default="stub")
     ENABLE_CROSS_BORDER_TRANSFERS: bool = Field(default=False)
+    ENABLE_SANCTIONS_SCREENING_APPROVED: bool = Field(default=False)
+    ENABLE_MFA_VERIFICATION: bool = Field(default=False)
+    MFA_PROVIDER: str = Field(default="stub")
 
     # Bank-Selectable Integrations (all off by default)
     ENABLE_MOBILE_MONEY_INTEGRATION: bool = Field(default=False)

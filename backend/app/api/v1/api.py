@@ -15,10 +15,6 @@ from app.api.v1.endpoints import (
     admin,
     integrations,
     chat,
-    documents,
-    knowledge,
-    tools,
-    enterprise,
 )
 
 api_router = APIRouter()
@@ -38,7 +34,3 @@ api_router.include_router(audit.router, prefix="/audit", tags=["Audit Log"])
 api_router.include_router(admin.router, prefix="/admin", tags=["Banking Admin"])
 api_router.include_router(integrations.router, prefix="/integrations", tags=["Bank-Selectable Integrations"])
 api_router.include_router(chat.router, prefix="/chat", tags=["Bilingual Banking Chat"])
-api_router.include_router(documents.router, prefix="/documents", tags=["Document Ingestion"])
-api_router.include_router(knowledge.router, prefix="/knowledge", tags=["Knowledge Base"])
-api_router.include_router(tools.router, prefix="/tools", tags=["Tools Gateway"])
-api_router.include_router(enterprise.router, prefix="/enterprise", tags=["Enterprise Administration"])
