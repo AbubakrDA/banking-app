@@ -42,3 +42,8 @@
 - Created `apps/staff/` (separate login & build with zero imports from `apps/customer/`, 10-minute idle timeout, written-reason customer search, risk alerts, approvals, audit chain verify, HR/Marketing policy-only restricted view).
 - Command: `npm.cmd run typecheck; npm.cmd test; npm.cmd run build`
 - Result: `apps/customer`: `3 passed`, `tsc` & `vite build` passed; `apps/staff`: `3 passed`, `tsc` & `vite build` passed.
+
+## Phase F — Documentation, Compliance, CI & Final Verification
+- Added/updated `README.md`, `BANKING.md`, `docs/SECURITY.md`, `docs/decisions.md`, `docs/requirements.md`, `docs/integrations.md`, `docs/compliance/cbos.md`, and `.github/workflows/ci-security-and-tests.yml`.
+- Backend full suite (`python -m pytest -v` in `backend/`): `31 passed, 1 skipped in 1.51s` (`test_postgres_rls_cross_tenant_isolation` skipped / `UNVERIFIED` because `POSTGRES_TEST_URL` is unset).
+- Frontend workspaces (`npm.cmd run typecheck; npm.cmd test; npm.cmd run build`): `@banking/customer-app`: `3 passed`; `@banking/staff-app`: `3 passed`; `tsc` & `vite build` passed for both apps.

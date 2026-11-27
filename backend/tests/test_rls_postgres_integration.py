@@ -16,7 +16,7 @@ async def test_x_tenant_id_header_cannot_spoof_jwt_tenant_context(client: AsyncC
         "X-Tenant-ID": "tenant_spoofed_beta",
     }
 
-    res = await client.get("/api/v1/infrastructure/quota", headers=spoofed_headers)
+    res = await client.get("/api/v1/auth/me", headers=spoofed_headers)
     assert res.status_code == 200
     assert res.json()["data"]["tenant_id"] == "tenant_jwt_alpha"
     assert res.headers.get("X-Tenant-Context") == "tenant_jwt_alpha"

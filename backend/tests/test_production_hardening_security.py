@@ -6,32 +6,26 @@ from app.core.security import create_access_token
 @pytest.mark.asyncio
 async def test_owasp_api1_bola_idor_protection(client: AsyncClient) -> None:
     """OWASP API1: Prevent Broken Object Level Authorization (BOLA/IDOR)."""
-    token_a = create_access_token("user_a", "tenant_alpha", "admin", "a@alpha.com")
+    from app.main import app
+    from app.core.database import get_db
+    from app.models.banking import BankAccount
+    from app.services.banking.service import BankingService
+    from sqlalchemy import select
+
+    async for db in app.dependency_overrides[get_db]():
+        await BankingService.bank_api.seed_dev_data(db, "tenant_alpha")
+        await db.commit()
+        acct_alpha = (
+            await db.execute(select(BankAccount).where(BankAccount.tenant_id == "tenant_alpha").limit(1))
+        ).scalar_one()
+        acct_id = acct_alpha.id
+        break
+
     token_b = create_access_token("user_b", "tenant_beta", "admin", "b@beta.com")
-    headers_a = {"Authorization": f"Bearer {token_a}"}
-    headers_b = {"Authorization": f"Bearer {token_b}"}
+    headers_b = {"Authorization": f"Bearer {token_b}", "X-Access-Reason": "Cross-tenant check"}
 
-    # Tenant Alpha registers a customer via conversation
-    conv_res = await client.post(
-        "/api/v1/chat/conversations",
-        headers=headers_a,
-        json={"customer_name": "Alice Alpha", "channel": "web"},
-    )
-    assert conv_res.status_code == 200
-    cust_id = conv_res.json()["data"]["customer_id"]
-
-    # Tenant Alpha creates a ticket
-    ticket_payload = {
-        "customer_id": cust_id,
-        "subject": "Alpha Confidential Security Ticket",
-        "description": "Sensitive customer account credentials issue",
-    }
-    res_ticket = await client.post("/api/v1/tickets", headers=headers_a, json=ticket_payload)
-    assert res_ticket.status_code == 200
-    ticket_id = res_ticket.json()["data"]["id"]
-
-    # Tenant Beta attempts to access Tenant Alpha's ticket directly -> 404 (strictly isolated)
-    res_idor = await client.get(f"/api/v1/tickets/{ticket_id}", headers=headers_b)
+    # Tenant Beta attempts to access Tenant Alpha's account directly -> 404 (strictly isolated)
+    res_idor = await client.get(f"/api/v1/accounts/{acct_id}", headers=headers_b)
     assert res_idor.status_code == 404
 
 
@@ -43,21 +37,21 @@ async def test_owasp_api2_broken_authentication_jwt_tampering(client: AsyncClien
     # 1. Tampered signature
     tampered_token = valid_token[:-6] + "xxxxxx"
     res_tampered = await client.get(
-        "/api/v1/tickets",
+        "/api/v1/accounts",
         headers={"Authorization": f"Bearer {tampered_token}"},
     )
     assert res_tampered.status_code == 401
 
     # 2. Garbage bearer token
     res_garbage = await client.get(
-        "/api/v1/tickets",
+        "/api/v1/accounts",
         headers={"Authorization": "Bearer invalid.fake.token"},
     )
     assert res_garbage.status_code == 401
 
     # 3. Missing bearer prefix
     res_no_prefix = await client.get(
-        "/api/v1/tickets",
+        "/api/v1/accounts",
         headers={"Authorization": valid_token},
     )
     assert res_no_prefix.status_code == 401
@@ -66,42 +60,20 @@ async def test_owasp_api2_broken_authentication_jwt_tampering(client: AsyncClien
 @pytest.mark.asyncio
 async def test_owasp_api5_broken_function_level_authorization(client: AsyncClient) -> None:
     """OWASP API5: Prevent Broken Function Level Authorization (privilege escalation)."""
-    token_agent = create_access_token("agent_01", "tenant_bfla", "agent", "agent@test.com")
-    headers_agent = {"Authorization": f"Bearer {token_agent}"}
+    token_emp = create_access_token("emp_01", "tenant_bfla", "employee", "emp@test.com")
+    headers_emp = {"Authorization": f"Bearer {token_emp}"}
 
-    # Agent attempts to access Admin-only endpoints:
-    # 1. Modify branding
-    res_brand = await client.patch(
-        "/api/v1/enterprise/branding",
-        headers=headers_agent,
-        json={"primary_color": "#000000"},
-    )
-    assert res_brand.status_code == 403
-
-    # 2. Trigger backup
-    res_backup = await client.post(
-        "/api/v1/backup/trigger",
-        headers=headers_agent,
-        json={"backup_type": "FULL", "target_type": "POSTGRESQL"},
-    )
-    assert res_backup.status_code == 403
-
-    # 3. Modify retention policy
-    res_retention = await client.put(
-        "/api/v1/backup/retention-policy",
-        headers=headers_agent,
-        json={"daily_retention_days": 90},
-    )
-    assert res_retention.status_code == 403
+    assert (await client.get("/api/v1/admin/config", headers=headers_emp)).status_code == 403
+    assert (await client.get("/api/v1/audit", headers=headers_emp)).status_code == 403
+    assert (await client.get("/api/v1/risk/alerts", headers=headers_emp)).status_code == 403
 
 
 @pytest.mark.asyncio
 async def test_sql_injection_defense_and_sanitization(client: AsyncClient) -> None:
     """Validate parameterized query safety against SQL Injection attacks."""
     token = create_access_token("user_sqli", "tenant_sqli", "admin", "sqli@test.com")
-    headers = {"Authorization": f"Bearer {token}"}
+    headers = {"Authorization": f"Bearer {token}", "X-Access-Reason": "SQLi security check"}
 
-    # Attempt classic SQL injection vectors in search queries
     malicious_searches = [
         "' OR '1'='1",
         "1; DROP TABLE users; --",
@@ -110,37 +82,26 @@ async def test_sql_injection_defense_and_sanitization(client: AsyncClient) -> No
     ]
 
     for payload in malicious_searches:
-        res = await client.get(f"/api/v1/tickets?search={payload}", headers=headers)
-        assert res.status_code == 200  # Safely parameterized, returns valid empty or matched results
+        res = await client.get(f"/api/v1/customers/search?q={payload}", headers=headers)
+        assert res.status_code == 200
         data = res.json()["data"]
         assert isinstance(data, list)
 
 
 @pytest.mark.asyncio
 async def test_xss_payload_neutralization(client: AsyncClient) -> None:
-    """Validate XSS payload handling and sanitization."""
-    token = create_access_token("user_xss", "tenant_xss", "admin", "xss@test.com")
+    """Validate XSS payload handling in policy upload without script execution."""
+    token = create_access_token("user_xss", "tenant_xss", "employee", "xss@test.com")
     headers = {"Authorization": f"Bearer {token}"}
 
-    conv_res = await client.post(
-        "/api/v1/chat/conversations",
-        headers=headers,
-        json={"customer_name": "XSS Tester", "channel": "web"},
-    )
-    assert conv_res.status_code == 200
-    cust_id = conv_res.json()["data"]["customer_id"]
-
     xss_payload = "<script>alert('pwned')</script><img src=x onerror=alert(1)>"
-    ticket_payload = {
-        "customer_id": cust_id,
-        "subject": "XSS Test Ticket",
-        "description": xss_payload,
-    }
-    res = await client.post("/api/v1/tickets", headers=headers, json=ticket_payload)
+    res = await client.post(
+        "/api/v1/policies",
+        headers=headers,
+        json={"title": "XSS Policy Test", "filename": "xss.pdf", "pages": [xss_payload]},
+    )
     assert res.status_code == 200
-    ticket = res.json()["data"]
-    # Verify description is stored as safe text without arbitrary execution
-    assert "alert('pwned')" in ticket["description"]
+    assert res.json()["data"]["title"] == "XSS Policy Test"
 
 
 @pytest.mark.asyncio

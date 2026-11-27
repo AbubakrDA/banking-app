@@ -1,65 +1,31 @@
-# BankingAIPlatform
+# ConversaBank — Intelligent Banking AI Layer
 
-**Enterprise AI Customer Support & Business Intelligence Platform**
+An AI-powered Intelligent Banking Layer that sits on top of a bank's existing core systems without replacing them:
 
-BankingAIPlatform is an intelligent, secure, multi-tenant customer-support and business-intelligence platform enabling organizations to automate customer support using AI agents, manage customer memory, integrate with business data hubs (Google Sheets, databases, CRM/ERP), and generate actionable management intelligence.
+```
+Customer / Employee → Banking AI Layer → Bank APIs → Core Banking Systems
+```
 
----
+## Repository Structure
 
-## Architecture Overview
+- `backend/` — FastAPI + SQLAlchemy async API, RBAC, surface isolation (`customer`, `staff`, `both`), maker-checker approvals, tamper-evident hash-chained audit log, bilingual AI layer (Arabic, English, mixed), and bank-selectable integration registry.
+- `apps/customer/` — Customer web and Capacitor-ready mobile app (biometric/PIN background lock, privacy shield, idempotent transfers, card controls, bilingual AI chat).
+- `apps/staff/` — Separate staff operations build with its own login, 10-minute idle timeout, written-reason customer search, risk/approvals/audit consoles, and department-restricted (`hr`, `marketing`) views.
+- `packages/shared/` — Shared TypeScript types, in-memory token `apiClient`, and EN/AR translations (contains no screens).
+- `docs/` — Security posture ([SECURITY.md](file:///D:/banking-app/banking-app/docs/SECURITY.md)), architectural decisions ([decisions.md](file:///D:/banking-app/banking-app/docs/decisions.md)), department requirements ([requirements.md](file:///D:/banking-app/banking-app/docs/requirements.md)), integrations ([integrations.md](file:///D:/banking-app/banking-app/docs/integrations.md)), and compliance ([cbos.md](file:///D:/banking-app/banking-app/docs/compliance/cbos.md)).
 
-- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, Recharts
-- **Backend:** Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic
-- **Database & Storage:** PostgreSQL 16 with pgvector, Redis 7, MinIO / S3 object storage
-- **Background Processing:** Celery with Redis broker
-- **Authentication:** Keycloak OIDC with RBAC & multi-tenant row-level security
-- **AI & RAG:** Controlled Agent Orchestration, pgvector vector indexing, vision models, OCR
-- **Integrations:** Tool Gateway with MCP proxy & Google Sheets API connectors
-
----
-
-## Engineering Control: Harness Engineering
-
-BankingAIPlatform strictly follows the **Harness Engineering** methodology.
-Every task proceeds under the mandatory protocol:
-`READ` → `PLAN` → `IMPLEMENT` → `TEST` → `INSPECT` → `REPAIR` → `RETEST` → `REPORT`
-
-See [engineering/harness/README.md](file:///D:/BANKING_AI_PLATFORM/engineering/harness/README.md) for full protocol specifications.
-
----
-
-## Documentation Index
-
-- [PROJECT_AUDIT.md](file:///D:/BANKING_AI_PLATFORM/PROJECT_AUDIT.md) — Baseline workspace audit
-- [TARGET_ARCHITECTURE.md](file:///D:/BANKING_AI_PLATFORM/TARGET_ARCHITECTURE.md) — Target system architecture
-- [PHASE_ROADMAP.md](file:///D:/BANKING_AI_PLATFORM/PHASE_ROADMAP.md) — 16-phase implementation roadmap
-- [SECURITY_ASSESSMENT.md](file:///D:/BANKING_AI_PLATFORM/SECURITY_ASSESSMENT.md) — Security threat model and controls
-- [HARNESS_IMPLEMENTATION_PLAN.md](file:///D:/BANKING_AI_PLATFORM/HARNESS_IMPLEMENTATION_PLAN.md) — Harness design
-- [PHASE_0_COMPLETION_REPORT.md](file:///D:/BANKING_AI_PLATFORM/PHASE_0_COMPLETION_REPORT.md) — Phase 0 sign-off
-
----
-
-## Requirements & Verification
-
-- **Python:** `>=3.12` (managed via `uv`)
-- **Node.js:** `>=20` (`22` LTS used in CI)
+## Running Tests Locally
 
 ### Backend
-```bash
+```powershell
 cd backend
-uv sync --extra dev
-uv run pytest -q --cov=app --cov-fail-under=74
+python -m pytest -q
 ```
 
-### Frontend
-```bash
-cd frontend
-npm ci
-npm run lint && npx tsc --noEmit && npm test && npm run build
+### Frontend (`apps/customer` & `apps/staff`)
+```powershell
+npm.cmd install
+npm.cmd run typecheck
+npm.cmd test
+npm.cmd run build
 ```
-
-### Current Verification Boundaries
-- **Backend tests:** Verified with SQLite in-memory async test harness (`240+` tests, `74%` coverage). Live PostgreSQL 16 RLS (`tests/test_rls_postgres_integration.py`) requires `POSTGRES_TEST_URL` and is run in CI (`.github/workflows/ci-security-and-tests.yml`).
-- **Authentication:** HS256 JWT (`alg`, `typ`, `iss`, `aud`) is active in dev/test (`ALLOW_DEV_STATIC_JWT_SECRET=True`, forbidden in staging/production). Live Keycloak OIDC JWKS validation is **Partial / Not yet connected**.
-- **Malware scanning:** `ClamAVScanner` (`INSTREAM`) fails closed to quarantine when `CLAMAV_ENABLED=true` and `clamd` is unreachable; heuristic full-payload pre-filter is active by default.
-- **Frontend:** UI shell pages currently render demo/mock data; `apiClient.ts` foundation is in place (`Partial`).
