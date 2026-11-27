@@ -47,4 +47,11 @@ __all__ = [
     "BackupRecord",
     "RestoreDrill",
     "BackupRetentionPolicy",
+    "BankAccount",
+    "BankTransaction",
+    "BankTransfer",
+    "BankCard",
+    "RiskAlert",
+    "PolicyDocument",
+    "PolicyChunk",
 ]
