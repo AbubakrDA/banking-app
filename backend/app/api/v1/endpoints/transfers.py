@@ -1,10 +1,10 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Header, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.auth import AuthenticatedUser, require_roles, get_staff_access_reason, STAFF_ROLES
+from app.core.auth import AuthenticatedUser, require_roles, require_surface, get_staff_access_reason, STAFF_ROLES
 from app.models.banking import BankTransfer
 from app.schemas.envelope import APIResponse
 from app.schemas.banking import BankTransferRead, TransferCreateRequest
@@ -16,6 +16,7 @@ router = APIRouter()
 @router.get("", response_model=APIResponse[List[BankTransferRead]])
 async def list_transfers(
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("both")),
     current_user: AuthenticatedUser = Depends(require_roles("customer", "employee", "risk_officer", "admin")),
     reason: Optional[str] = Depends(get_staff_access_reason),
     db: AsyncSession = Depends(get_db),
