@@ -13,6 +13,7 @@ from app.api.v1.endpoints import (
     policies,
     audit,
     admin,
+    integrations,
     chat,
     documents,
     knowledge,

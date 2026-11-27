@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +8,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import hash_password, verify_password, create_access_token
-from app.core.auth import get_current_user, require_roles, AuthenticatedUser
+from app.core.auth import get_current_user, require_roles, AuthenticatedUser, STAFF_ROLES
 from app.models.user import User
 from app.schemas.envelope import APIResponse
 from app.schemas.auth import LoginRequest, TokenResponse, UserRead, UserCreate, UserUpdateRole
@@ -44,18 +45,24 @@ async def login(
             detail="Invalid email or password for this organization",
         )
 
-    # 2. Issue signed JWT
+    # 2. Issue signed JWT (staff sessions expire sooner than customer sessions)
+    expires_minutes = (
+        settings.STAFF_IDLE_TIMEOUT_MINUTES
+        if role in STAFF_ROLES
+        else settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
     token = create_access_token(
         subject=user_id,
         tenant_id=tenant_id,
         role=role,
         email=login_data.email,
+        expires_delta=timedelta(minutes=expires_minutes),
     )
 
     data = TokenResponse(
         access_token=token,
         token_type="Bearer",
-        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        expires_in=expires_minutes * 60,
         tenant_id=tenant_id,
         role=role,
         email=login_data.email,
