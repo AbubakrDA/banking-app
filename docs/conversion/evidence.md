@@ -51,12 +51,22 @@
 ## Baseline Note (`247b533`)
 - Starting commit on `main`: `247b533` (empty commit message, author "Verdent Agent"), preserved without rewriting history.
 
-## Live Verification Run (`banking/update-2026-11-27`)
-- **Live PostgreSQL 16 RLS (`test_postgres_rls_cross_tenant_isolation`):** `UNVERIFIED` (skipped in local environment: `POSTGRES_TEST_URL=UNSET`, and neither `psql` nor `docker` is installed on this host).
-- **Backend Ruff & Pytest:**
-  - Command: `python -m ruff check app` -> `All checks passed!`
-  - Command: `python -m pytest -q` -> `42 passed, 1 skipped in 2.17s` (reported from the Windows run; NOT re-run in the sandbox, which cannot install dependencies. Re-run in `backend/` and replace this line with the output.)
-- **Frontend Workspaces (`apps/customer`, `apps/staff`):**
-  - Command: `npm.cmd run typecheck; npm.cmd test; npm.cmd run build`
-  - `@banking/customer-app`: `tsc --noEmit` passed; `vitest run` (`3 passed (3)`); `vite build` passed (`dist/assets/index-BfyPvx91.js 154.30 kB`).
-  - `@banking/staff-app`: `tsc --noEmit` passed; `vitest run` (`3 passed (3)`); `vite build` passed (`dist/assets/index-CDptEYMp.js 153.50 kB`).
+## Live Verification Run (`banking/update-2026-11-27` at `2056401`, fresh clone `D:\banking-verify`)
+- **Live PostgreSQL 16 RLS (`test_postgres_rls_cross_tenant_isolation`):** `UNVERIFIED` (SKIPPED).
+  - PostgreSQL version / role: Not installed (`BLOCKED`). `winget install -e --id PostgreSQL.PostgreSQL.16` failed with: `Downloading https://get.enterprisedb.com/postgresql/postgresql-16.16-2-windows-x64.exe` -> `0x80190193 : Forbidden (403)`. No `psql` or `docker` is installed on the host, so `POSTGRES_TEST_URL` remained unset.
+  - RLS skip output: `SKIPPED [1] tests\test_rls_postgres_integration.py:25: Live PostgreSQL 16 + non-superuser role unavailable (POSTGRES_TEST_URL unset)`
+- **Backend Ruff & Pytest (`D:\banking-verify\backend` after `python -m pip install -r requirements.txt`):**
+  - Command: `python -m ruff check app` -> `Found 1117 errors.` (`[*] 689 fixable with --fix (3 unsafe fixes available with --fix --unsafe-fixes)`).
+  - Command: `python -m pytest -q -rs`
+  ```
+  ........................................s..                              [100%]
+  =========================== short test summary info ===========================
+  SKIPPED [1] tests\test_rls_postgres_integration.py:25: Live PostgreSQL 16 + non-superuser role unavailable (POSTGRES_TEST_URL unset)
+  42 passed, 1 skipped in 2.11s
+  ```
+  - Failed tests: none (0 failed).
+- **Frontend Workspaces (`D:\banking-verify`):**
+  - `npm ci`: `added 188 packages, and audited 192 packages in 8s`
+  - `npm run typecheck`: `@banking/customer-app` `tsc --noEmit` (exit 0); `@banking/staff-app` `tsc --noEmit` (exit 0).
+  - `npm test`: `@banking/customer-app` `Test Files 1 passed (1), Tests 3 passed (3)`; `@banking/staff-app` `Test Files 1 passed (1), Tests 3 passed (3)`.
+  - `npm run build`: `@banking/customer-app` `dist/assets/index-BfyPvx91.js 154.30 kB │ gzip: 50.17 kB (built in 1.03s)`; `@banking/staff-app` `dist/assets/index-CDptEYMp.js 153.50 kB │ gzip: 49.98 kB (built in 1.06s)`.
