@@ -34,11 +34,9 @@ async def login(
     if not user and login_data.email == "alex@banking-ai-platform.internal":
         user_id = "user_admin_001"
         role = "admin"
-        name = "Alex Chen"
     elif user and verify_password(login_data.password, user.hashed_password):
         user_id = user.id
         role = user.role
-        name = user.full_name
     else:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

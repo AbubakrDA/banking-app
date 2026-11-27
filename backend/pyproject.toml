@@ -1,7 +1,7 @@
 [project]
 name = "banking-ai-platform-backend"
 version = "0.1.0"
-description = "BankingAIPlatform Enterprise AI Customer Support & Business Intelligence Backend"
+description = "BankingAIPlatform Backend"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

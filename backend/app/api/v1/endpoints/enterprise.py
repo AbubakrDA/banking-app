@@ -250,7 +250,7 @@ async def list_audit_logs(
     logs = res.scalars().all()
 
     return APIResponse.ok(
-        data=[AuditLogRead.model_validate(l) for l in logs],
+        data=[AuditLogRead.model_validate(log) for log in logs],
         request_id=getattr(request.state, "request_id", None),
         tenant_id=current_user.tenant_id,
     )
