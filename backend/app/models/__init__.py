@@ -11,6 +11,15 @@ from app.models.analytics import AIInsight, OrganizationalMemoryEntry, Executive
 from app.models.tool import ToolExecution
 from app.models.enterprise import TenantBranding, AuditLog, TenantSecurityPolicy, ModelRoutingConfig
 from app.models.backup import BackupRecord, RestoreDrill, BackupRetentionPolicy
+from app.models.banking import (
+    BankAccount,
+    BankTransaction,
+    BankTransfer,
+    BankCard,
+    RiskAlert,
+    PolicyDocument,
+    PolicyChunk,
+)
 
 __all__ = [
     "Base",

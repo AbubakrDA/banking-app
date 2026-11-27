@@ -57,6 +57,10 @@ class Settings(BaseSettings):
     CLAMAV_PORT: int = Field(default=3310)
     CLAMAV_SOCKET: str | None = None
 
+    # Banking Domain & AI Stub
+    HIGH_RISK_TRANSFER_MINOR: int = Field(default=100_000)
+    LLM_PROVIDER: str = Field(default="stub")
+
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
