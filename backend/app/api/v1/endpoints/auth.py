@@ -11,7 +11,7 @@ from app.core.security import hash_password, verify_password, create_access_toke
 from app.core.auth import get_current_user, require_roles, AuthenticatedUser, STAFF_ROLES
 from app.models.user import User
 from app.schemas.envelope import APIResponse
-from app.schemas.auth import LoginRequest, TokenResponse, UserRead, UserCreate, UserUpdateRole
+from app.schemas.auth import LoginRequest, TokenResponse, UserRead, UserCreate
 
 router = APIRouter()
 

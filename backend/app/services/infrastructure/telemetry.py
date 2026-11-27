@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, timezone
-from typing import Dict, Any, List
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select, func
 

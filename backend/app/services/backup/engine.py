@@ -1,8 +1,7 @@
 import hashlib
-import uuid
 from datetime import datetime, timezone, timedelta
-from typing import Optional, List, Dict, Any, Tuple
-from sqlalchemy import select, func, desc, update
+from typing import Optional
+from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 
@@ -15,7 +14,6 @@ from app.schemas.backup import (
     RestoreDrillResponse,
     DrillListResponse,
     RetentionPolicyUpdate,
-    RetentionPolicyResponse,
     BackupStatusResponse,
     PruneBackupsResponse,
 )

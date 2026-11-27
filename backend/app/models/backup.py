@@ -1,9 +1,7 @@
-import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 from typing import Optional, Dict, Any
 from sqlalchemy import String, DateTime, Boolean, ForeignKey, BigInteger, Integer, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.core.database import Base
 from app.models.base import TimeStampedModel
 
 

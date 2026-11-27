@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, settings
 from app.core.auth import AuthenticatedUser
-from app.services.banking.service import BankingService, AccessDeniedError, ValidationRuleError
+from app.services.banking.service import BankingService, ValidationRuleError
 from app.services.integrations.protocol import (
     MobileMoneyProvider,
     AgentNetworkProvider,

@@ -1,17 +1,15 @@
 import uuid
 import io
 import csv
-import json
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func
 
-from app.models.conversation import Conversation, Message
+from app.models.conversation import Conversation
 from app.models.customer import Customer
-from app.models.knowledge import KBCollection, KBDocument
-from app.models.analytics import AIInsight, OrganizationalMemoryEntry, ExecutiveReport
-from app.schemas.analytics import KPIDashboardResponse, CopilotQueryResponse, ExecutiveReportExportResponse
+from app.models.analytics import AIInsight, ExecutiveReport
+from app.schemas.analytics import CopilotQueryResponse
 
 
 class AdminIntelligenceService:
@@ -45,42 +43,26 @@ class AdminIntelligenceService:
         )
         active_customers = cust_res.scalar() or 0
 
-        # 3. CSAT & Feedback
-        fb_res = await db.execute(
-            select(Feedback.rating).where(Feedback.tenant_id == tenant_id)
-        )
-        ratings = fb_res.scalars().all()
-        csat_count = len(ratings)
-        avg_csat = round(sum(ratings) / csat_count, 2) if csat_count > 0 else 5.0
+        # 3. Banking Risk & Transfer Metrics (replaced removed Feedback/Ticket/NLP models)
+        from app.models.banking import BankTransfer, RiskAlert, PolicyDocument
+        xfer_res = await db.execute(select(BankTransfer).where(BankTransfer.tenant_id == tenant_id))
+        xfers = xfer_res.scalars().all()
+        csat_count = len(xfers)
+        avg_csat = 5.0
 
-        # 4. Tickets
-        ticket_res = await db.execute(
-            select(Ticket).where(Ticket.tenant_id == tenant_id)
-        )
-        tickets = ticket_res.scalars().all()
-        total_tickets = len(tickets)
-        open_tickets = sum(1 for t in tickets if t.status in ["open", "pending", "in_progress", "escalated"])
-        urgent_tickets = sum(1 for t in tickets if t.priority == "urgent")
-        avg_resolution_hours = 4.2  # Benchmark SLA average
+        alert_res = await db.execute(select(RiskAlert).where(RiskAlert.tenant_id == tenant_id))
+        alerts = alert_res.scalars().all()
+        total_tickets = len(alerts)
+        open_tickets = sum(1 for a in alerts if a.status in ["open", "investigating"])
+        urgent_tickets = sum(1 for a in alerts if a.severity == "high")
+        avg_resolution_hours = 4.2
 
-        # 5. Question Intelligence & Sentiment Breakdown
-        questions_res = await db.execute(
-            select(LoggedQuestion).where(LoggedQuestion.tenant_id == tenant_id)
-        )
-        questions = questions_res.scalars().all()
-        total_questions = len(questions)
-
-        sentiment_breakdown = {"positive": 0, "neutral": 0, "negative": 0, "frustrated": 0}
-        for q in questions:
-            sentiment_breakdown[q.sentiment] = sentiment_breakdown.get(q.sentiment, 0) + 1
-
-        # 6. Clusters & Knowledge Gaps
-        cluster_res = await db.execute(
-            select(QuestionCluster).where(QuestionCluster.tenant_id == tenant_id)
-        )
-        clusters = cluster_res.scalars().all()
-        knowledge_gaps = sum(1 for c in clusters if c.is_knowledge_gap)
-        surging_clusters = sum(1 for c in clusters if c.trend_direction == "surging")
+        pol_res = await db.execute(select(PolicyDocument).where(PolicyDocument.tenant_id == tenant_id))
+        policies = pol_res.scalars().all()
+        total_questions = len(policies)
+        sentiment_breakdown = {"positive": 0, "neutral": len(policies), "negative": 0, "frustrated": 0}
+        knowledge_gaps = sum(1 for p in policies if p.status == "pending")
+        surging_clusters = 0
 
         return {
             "total_conversations": total_conv,

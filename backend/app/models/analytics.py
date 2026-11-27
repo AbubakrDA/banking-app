@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Optional, Dict, Any, List
-from sqlalchemy import String, Integer, Float, Text, Boolean, DateTime, JSON, ForeignKey
+from sqlalchemy import String, Float, Text, Boolean, DateTime, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import TenantScopedModel
 

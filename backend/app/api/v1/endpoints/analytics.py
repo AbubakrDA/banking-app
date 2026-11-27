@@ -1,7 +1,7 @@
 import uuid
 import json
 from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -12,7 +12,6 @@ from app.models.analytics import AIInsight, OrganizationalMemoryEntry, Executive
 from app.schemas.envelope import APIResponse
 from app.schemas.analytics import (
     KPIDashboardResponse,
-    AIInsightCreate,
     AIInsightRead,
     AIInsightAcknowledge,
     OrganizationalMemoryCreate,

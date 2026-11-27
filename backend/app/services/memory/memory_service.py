@@ -1,7 +1,5 @@
 import re
-from datetime import datetime, timezone
 from typing import Tuple, Optional, Dict, Any, List
-from app.models.memory import CustomerMemory
 
 
 class MemoryService:
