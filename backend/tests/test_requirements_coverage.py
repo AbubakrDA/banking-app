@@ -232,3 +232,44 @@ async def test_req_S1_to_S15_department_isolation_and_staff_timeout(client: Asyn
         hdrs = {**_auth(f"{dept}_1", dept, "tenant_dept"), "X-Override-Reason": "Audit"}
         assert (await client.get("/api/v1/accounts", headers=hdrs)).status_code == 403
         assert (await client.get("/api/v1/transactions", headers=hdrs)).status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_req_S5_sanctions_placeholder_blocks_cross_border(client: AsyncClient) -> None:
+    from app.main import app
+    from app.core.database import get_db
+
+    tenant = "tenant_req_s5"
+    async for db in app.dependency_overrides[get_db]():
+        await BankingService.bank_api.seed_dev_data(db, tenant)
+        await db.commit()
+        accts = (await db.execute(select(BankAccount).where(BankAccount.tenant_id == tenant))).scalars().all()
+        c1_usd = next(a.id for a in accts if a.account_number_masked == "****1042")
+        c2_usd = next(a.id for a in accts if a.account_number_masked == "****3099")
+        break
+
+    risk = _auth("risk_01", "risk_officer", tenant)
+    r_status = await client.get("/api/v1/risk/sanctions/status", headers=risk)
+    assert r_status.status_code == 200
+    assert r_status.json()["data"]["sanctions_provider"] == "stub"
+    assert r_status.json()["data"]["sanctions_screening_approved"] is False
+
+    cust1 = _auth("cust_user_01", "customer", tenant)
+    orig_cb = settings.ENABLE_CROSS_BORDER_TRANSFERS
+    try:
+        # Even if cross-border is enabled, sanctions flag off still blocks it
+        settings.ENABLE_CROSS_BORDER_TRANSFERS = True
+        r_blocked = await client.post(
+            "/api/v1/transfers",
+            headers=cust1,
+            json={
+                "from_account_id": c1_usd,
+                "to_account_id": c2_usd,
+                "amount_minor": 500,
+                "currency": "USD",
+                "is_cross_border": True,
+            },
+        )
+        assert r_blocked.status_code == 403
+    finally:
+        settings.ENABLE_CROSS_BORDER_TRANSFERS = orig_cb

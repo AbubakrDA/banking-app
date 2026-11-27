@@ -21,6 +21,7 @@ Every `/api/v1` route (except the explicit public allowlist `/api/v1/health` and
 | `GET` | `/api/v1/customers/search` | `staff` | `employee, risk_officer, admin` | `require_surface("staff")`, `require_roles(...)`, `get_staff_access_reason` |
 | `GET` | `/api/v1/risk/alerts` | `staff` | `risk_officer, admin` | `require_surface("staff")`, `require_roles("risk_officer", "admin")` |
 | `PATCH` | `/api/v1/risk/alerts/{alert_id}` | `staff` | `risk_officer, admin` | `require_surface("staff")`, `require_roles("risk_officer", "admin")` |
+| `GET` | `/api/v1/risk/sanctions/status` | `staff` | `risk_officer, admin` | `require_surface("staff")`, `require_roles("risk_officer", "admin")` |
 | `GET` | `/api/v1/approvals` | `staff` | `risk_officer, admin` | `require_surface("staff")`, `require_roles("risk_officer", "admin")` |
 | `POST` | `/api/v1/approvals/{transfer_id}/approve` | `staff` | `admin` | `require_surface("staff")`, `require_roles("admin")` |
 | `POST` | `/api/v1/approvals/{transfer_id}/reject` | `staff` | `admin` | `require_surface("staff")`, `require_roles("admin")` |

@@ -239,7 +239,9 @@ class BankingService:
         idempotency_key: Optional[str] = None,
         is_cross_border: bool = False,
     ) -> BankTransfer:
-        if is_cross_border and not settings.ENABLE_CROSS_BORDER_TRANSFERS:
+        if is_cross_border and (
+            not settings.ENABLE_CROSS_BORDER_TRANSFERS or not settings.ENABLE_SANCTIONS_SCREENING_APPROVED
+        ):
             await cls.record_audit(
                 db,
                 user,
