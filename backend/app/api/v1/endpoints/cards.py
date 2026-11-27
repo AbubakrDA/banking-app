@@ -14,6 +14,7 @@ router = APIRouter()
 @router.get("", response_model=APIResponse[List[BankCardRead]])
 async def list_cards(
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("both")),
     current_user: AuthenticatedUser = Depends(require_roles("customer", "employee", "risk_officer", "admin")),
     reason: Optional[str] = Depends(get_staff_access_reason),
     db: AsyncSession = Depends(get_db),
@@ -32,7 +33,8 @@ async def update_card_status(
     card_id: str,
     payload: CardStatusUpdateRequest,
     request: Request,
-    current_user: AuthenticatedUser = Depends(require_roles("customer", "employee", "admin")),
+    _surface: AuthenticatedUser = Depends(require_surface("customer")),
+    current_user: AuthenticatedUser = Depends(require_roles("customer")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[BankCardRead]:
     card = await BankingService.update_card_status(db, current_user, card_id, payload.status)
