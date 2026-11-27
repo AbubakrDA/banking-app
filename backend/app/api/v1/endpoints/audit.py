@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.auth import AuthenticatedUser, require_roles
+from app.core.auth import AuthenticatedUser, require_roles, require_surface
 from app.models.enterprise import AuditLog
 from app.schemas.envelope import APIResponse
 

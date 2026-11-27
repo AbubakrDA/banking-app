@@ -16,7 +16,8 @@ router = APIRouter()
 @router.get("", response_model=APIResponse[List[PolicyDocumentRead]])
 async def list_policies(
     request: Request,
-    current_user: AuthenticatedUser = Depends(require_roles("customer", "employee", "risk_officer", "admin")),
+    _surface: AuthenticatedUser = Depends(require_surface("both")),
+    current_user: AuthenticatedUser = Depends(require_roles("customer", "employee", "risk_officer", "admin", "hr", "marketing")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[List[PolicyDocumentRead]]:
     stmt = select(PolicyDocument).where(PolicyDocument.tenant_id == current_user.tenant_id)
@@ -35,6 +36,7 @@ async def list_policies(
 async def upload_policy(
     payload: PolicyDocumentCreate,
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("employee", "admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[PolicyDocumentRead]:
@@ -58,6 +60,7 @@ async def approve_policy(
     policy_id: str,
     request: Request,
     payload: Optional[PolicyReviewRequest] = None,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[PolicyDocumentRead]:
@@ -81,6 +84,7 @@ async def reject_policy(
     policy_id: str,
     request: Request,
     payload: Optional[PolicyReviewRequest] = None,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[PolicyDocumentRead]:
