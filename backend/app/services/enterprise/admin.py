@@ -269,17 +269,17 @@ class EnterpriseAdminService:
             "IP Address",
             "Event Hash",
         ])
-        for l in logs:
+        for log in logs:
             writer.writerow([
-                l.created_at.isoformat(),
-                l.actor_id,
-                l.actor_email,
-                l.actor_role,
-                l.event_type,
-                l.target_resource,
-                l.status,
-                l.ip_address or "",
-                l.event_hash,
+                log.created_at.isoformat(),
+                log.actor_id,
+                log.actor_email,
+                log.actor_role,
+                log.event_type,
+                log.target_resource,
+                log.status,
+                log.ip_address or "",
+                log.event_hash,
             ])
         return output.getvalue()
 
