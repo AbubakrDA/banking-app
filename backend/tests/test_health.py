@@ -24,18 +24,41 @@ async def test_health_check_endpoint(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_tenant_context_endpoint(client: AsyncClient) -> None:
-    custom_tenant = "tenant_custom_acme_99"
+    from app.core.security import create_access_token
+    from app.core.database import get_db
+    from app.main import app
+    from app.models.tenant import Tenant
+
+    # Unauthenticated request with X-Tenant-ID header must be rejected (401)
+    r_unauth = await client.get(
+        "/api/v1/tenants/current",
+        headers={"X-Tenant-ID": "tenant_spoofed_99"},
+    )
+    assert r_unauth.status_code == 401
+
+    async for db in app.dependency_overrides[get_db]():
+        db.add(
+            Tenant(
+                id="tenant_health_01",
+                name="Health Check Bank",
+                slug="health-check-bank",
+                business_mode="hybrid",
+            )
+        )
+        await db.commit()
+        break
+
+    token = create_access_token("admin_h1", "tenant_health_01", "admin", "admin@h.local")
     response = await client.get(
         "/api/v1/tenants/current",
-        headers={"X-Tenant-ID": custom_tenant},
+        headers={"Authorization": f"Bearer {token}", "X-Tenant-ID": "tenant_spoofed_99"},
     )
     assert response.status_code == 200
-
     data = response.json()
     assert data["success"] is True
-    assert data["data"]["tenant_id"] == custom_tenant
-    assert data["data"]["business_mode"] == "hybrid"
-    assert response.headers["x-tenant-context"] == custom_tenant
+    assert data["data"]["tenant_id"] == "tenant_health_01"
+    assert data["data"]["name"] == "Health Check Bank"
+    assert response.headers["x-tenant-context"] == "tenant_health_01"
 
 
 @pytest.mark.asyncio
