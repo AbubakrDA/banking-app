@@ -45,7 +45,7 @@
 
 ## Phase F — Documentation, Compliance, CI & Final Verification
 - Added/updated `README.md`, `BANKING.md`, `docs/SECURITY.md`, `docs/decisions.md`, `docs/requirements.md`, `docs/integrations.md`, `docs/compliance/cbos.md`, and `.github/workflows/ci-security-and-tests.yml`.
-- Backend full suite (`python -m pytest -v` in `backend/`): `31 passed, 1 skipped in 1.51s` (`test_postgres_rls_cross_tenant_isolation` skipped / `UNVERIFIED` because `POSTGRES_TEST_URL` is unset).
+- Historical (before `banking/update-2026-11-27`, not re-run): backend `31 passed, 1 skipped in 1.51s`. Superseded by the live verification run below.
 - Frontend workspaces (`npm.cmd run typecheck; npm.cmd test; npm.cmd run build`): `@banking/customer-app`: `3 passed`; `@banking/staff-app`: `3 passed`; `tsc` & `vite build` passed for both apps.
 
 ## Baseline Note (`247b533`)
@@ -55,7 +55,7 @@
 - **Live PostgreSQL 16 RLS (`test_postgres_rls_cross_tenant_isolation`):** `UNVERIFIED` (skipped in local environment: `POSTGRES_TEST_URL=UNSET`, and neither `psql` nor `docker` is installed on this host).
 - **Backend Ruff & Pytest:**
   - Command: `python -m ruff check app` -> `All checks passed!`
-  - Command: `python -m pytest -q` -> `42 passed, 1 skipped in 2.17s`
+  - Command: `python -m pytest -q` -> `42 passed, 1 skipped in 2.17s` (reported from the Windows run; NOT re-run in the sandbox, which cannot install dependencies. Re-run in `backend/` and replace this line with the output.)
 - **Frontend Workspaces (`apps/customer`, `apps/staff`):**
   - Command: `npm.cmd run typecheck; npm.cmd test; npm.cmd run build`
   - `@banking/customer-app`: `tsc --noEmit` passed; `vitest run` (`3 passed (3)`); `vite build` passed (`dist/assets/index-BfyPvx91.js 154.30 kB`).
