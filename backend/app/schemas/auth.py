@@ -6,6 +6,7 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)
     tenant_id: Optional[str] = Field(default=None, description="Optional tenant override for multi-tenant accounts")
+    mfa_code: Optional[str] = Field(default=None, description="Optional MFA challenge code when MFA is enabled")
 
 
 class TokenResponse(BaseModel):

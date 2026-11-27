@@ -7,6 +7,7 @@ from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.config import settings
+from app.core.mfa import get_mfa_provider
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.auth import require_roles, require_surface, AuthenticatedUser, STAFF_ROLES, BANKING_ROLES
 from app.models.user import User
@@ -42,6 +43,16 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password for this organization",
         )
+
+    if settings.ENABLE_MFA_VERIFICATION:
+        mfa_ok = await get_mfa_provider(settings).verify(
+            user_id=user_id, action="login", code=login_data.mfa_code
+        )
+        if not mfa_ok:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="MFA challenge failed or missing mfa_code",
+            )
 
     # 2. Issue signed JWT (staff sessions expire sooner than customer sessions)
     expires_minutes = (
