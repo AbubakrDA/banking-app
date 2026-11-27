@@ -47,3 +47,6 @@
 - Added/updated `README.md`, `BANKING.md`, `docs/SECURITY.md`, `docs/decisions.md`, `docs/requirements.md`, `docs/integrations.md`, `docs/compliance/cbos.md`, and `.github/workflows/ci-security-and-tests.yml`.
 - Backend full suite (`python -m pytest -v` in `backend/`): `31 passed, 1 skipped in 1.51s` (`test_postgres_rls_cross_tenant_isolation` skipped / `UNVERIFIED` because `POSTGRES_TEST_URL` is unset).
 - Frontend workspaces (`npm.cmd run typecheck; npm.cmd test; npm.cmd run build`): `@banking/customer-app`: `3 passed`; `@banking/staff-app`: `3 passed`; `tsc` & `vite build` passed for both apps.
+
+## Baseline Note (`247b533`)
+- Starting commit on `main`: `247b533` (empty commit message, author "Verdent Agent"), preserved without rewriting history.
