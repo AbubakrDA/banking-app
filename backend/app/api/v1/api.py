@@ -36,6 +36,7 @@ api_router.include_router(approvals.router, prefix="/approvals", tags=["Human Ap
 api_router.include_router(policies.router, prefix="/policies", tags=["Bank Policies & RAG"])
 api_router.include_router(audit.router, prefix="/audit", tags=["Audit Log"])
 api_router.include_router(admin.router, prefix="/admin", tags=["Banking Admin"])
+api_router.include_router(integrations.router, prefix="/integrations", tags=["Bank-Selectable Integrations"])
 api_router.include_router(chat.router, prefix="/chat", tags=["Bilingual Banking Chat"])
 api_router.include_router(documents.router, prefix="/documents", tags=["Document Ingestion"])
 api_router.include_router(knowledge.router, prefix="/knowledge", tags=["Knowledge Base"])
