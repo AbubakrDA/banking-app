@@ -38,6 +38,7 @@ class AuditChainVerifyResponse(BaseModel):
 async def list_audit_logs(
     request: Request,
     limit: int = Query(100, ge=1, le=500),
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("risk_officer", "admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[List[AuditEntryRead]]:
@@ -58,6 +59,7 @@ async def list_audit_logs(
 @router.get("/verify", response_model=APIResponse[AuditChainVerifyResponse])
 async def verify_audit_chain(
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("risk_officer", "admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[AuditChainVerifyResponse]:

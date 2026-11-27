@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.config import settings
-from app.core.auth import AuthenticatedUser, require_roles, BANKING_ROLES
+from app.core.auth import AuthenticatedUser, require_roles, require_surface, BANKING_ROLES
 from app.models.user import User
 from app.schemas.envelope import APIResponse
 from app.schemas.auth import UserRead
@@ -24,6 +24,7 @@ class BankingSystemConfigRead(BaseModel):
 @router.get("/users", response_model=APIResponse[List[UserRead]])
 async def list_admin_users(
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[List[UserRead]]:
@@ -41,6 +42,7 @@ async def list_admin_users(
 @router.get("/config", response_model=APIResponse[BankingSystemConfigRead])
 async def get_admin_config(
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("admin")),
 ) -> APIResponse[BankingSystemConfigRead]:
     return APIResponse.ok(
