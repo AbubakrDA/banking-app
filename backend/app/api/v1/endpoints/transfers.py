@@ -59,7 +59,9 @@ async def list_transfers(
 async def create_transfer(
     payload: TransferCreateRequest,
     request: Request,
-    current_user: AuthenticatedUser = Depends(require_roles("customer", "employee", "admin")),
+    x_idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
+    _surface: AuthenticatedUser = Depends(require_surface("customer")),
+    current_user: AuthenticatedUser = Depends(require_roles("customer")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[BankTransferRead]:
     transfer = await BankingService.create_transfer(
@@ -70,6 +72,8 @@ async def create_transfer(
         amount_minor=payload.amount_minor,
         currency=payload.currency,
         reference=payload.reference,
+        idempotency_key=(x_idempotency_key or payload.idempotency_key),
+        is_cross_border=payload.is_cross_border,
     )
     await db.commit()
     return APIResponse.ok(

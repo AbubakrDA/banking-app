@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.auth import AuthenticatedUser, require_roles, get_staff_access_reason
+from app.core.auth import AuthenticatedUser, require_roles, require_surface, get_staff_access_reason
 from app.schemas.envelope import APIResponse
 from app.schemas.banking import BankCardRead, CardStatusUpdateRequest
 from app.services.banking.service import BankingService
