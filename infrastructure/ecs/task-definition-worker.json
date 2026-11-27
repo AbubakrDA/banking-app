@@ -1,0 +1,32 @@
+{
+  "family": "banking-ai-platform-worker",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/banking-ai-platform-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/banking-ai-platform-ecs-task-role",
+  "containerDefinitions": [
+    {
+      "name": "banking-ai-platform-celery-worker",
+      "image": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/banking-ai-platform-staging-backend:latest",
+      "essential": true,
+      "command": ["celery", "-A", "app.core.celery", "worker", "--loglevel=info"],
+      "environment": [
+        {"name": "ENVIRONMENT", "value": "production"}
+      ],
+      "secrets": [
+        {"name": "DATABASE_URL", "valueFrom": "arn:aws:secretsmanager:us-east-1:ACCOUNT_ID:secret:banking-ai-platform/staging/app-secrets:DATABASE_URL::"},
+        {"name": "REDIS_URL", "valueFrom": "arn:aws:secretsmanager:us-east-1:ACCOUNT_ID:secret:banking-ai-platform/staging/app-secrets:REDIS_URL::"}
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/banking-ai-platform-production",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "worker"
+        }
+      }
+    }
+  ]
+}

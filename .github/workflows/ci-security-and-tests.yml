@@ -1,0 +1,108 @@
+name: CI Security & Test Pipeline
+
+on:
+  push:
+    branches: [master, main, "harden/**"]
+  pull_request:
+    branches: [master, main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  backend-lint-typecheck-tests:
+    name: Backend Lint, Typecheck, Tests & PostgreSQL RLS
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: banking-ai-platform
+          POSTGRES_PASSWORD: banking_ai_ci_password
+          POSTGRES_DB: banking_ai_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U banking-ai-platform -d banking_ai_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov aiosqlite httpx greenlet ruff mypy
+      - name: Ruff lint & Mypy typecheck (app/services/)
+        working-directory: backend
+        run: |
+          ruff check app
+          mypy app/services/
+      - name: Run pytest with 74% coverage gate
+        working-directory: backend
+        env:
+          ENVIRONMENT: test
+          SECRET_KEY: ci-test-secret-key-not-for-production
+          POSTGRES_TEST_URL: postgresql+asyncpg://banking-ai-platform:banking_ai_ci_password@localhost:5432/banking_ai_test
+        run: |
+          python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=74
+
+  frontend-checks:
+    name: Frontend Lint, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install & verify frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+          npx tsc --noEmit
+          npm test
+          npm run build
+          npm audit --omit=dev --audit-level=high
+
+  security-scans:
+    name: Secret, SAST & Dependency Security Scans
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Bandit SAST & pip-audit
+        run: |
+          pip install bandit pip-audit
+          bandit -r backend/app -ll -ii
+          pip-audit -r backend/requirements.txt
+      - name: Semgrep SAST
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/python
+            p/typescript
+            p/owasp-top-ten
+      - name: Trivy IaC & filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: "1"

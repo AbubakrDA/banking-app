@@ -1,0 +1,27 @@
+version: 0.2
+
+# BankingAIPlatform AWS CodeBuild Specification (AWS_MANAGED Mode)
+# Enables building and pushing backend & frontend production containers to Amazon ECR
+# without requiring Docker on the user's local Windows computer.
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+      - IMAGE_TAG=${IMAGE_TAG:-staging-latest}
+  build:
+    commands:
+      - echo Building BankingAIPlatform Backend production image...
+      - docker build -t $ECR_REGISTRY/banking-ai-platform-${ENVIRONMENT}-backend:$IMAGE_TAG -f backend/Dockerfile.prod backend/
+      - echo Building BankingAIPlatform Frontend production image...
+      - docker build -t $ECR_REGISTRY/banking-ai-platform-${ENVIRONMENT}-frontend:$IMAGE_TAG -f frontend/Dockerfile.prod frontend/
+  post_build:
+    commands:
+      - echo Pushing production images to Amazon ECR...
+      - docker push $ECR_REGISTRY/banking-ai-platform-${ENVIRONMENT}-backend:$IMAGE_TAG
+      - docker push $ECR_REGISTRY/banking-ai-platform-${ENVIRONMENT}-frontend:$IMAGE_TAG
+      - echo Build and push completed for tag $IMAGE_TAG.

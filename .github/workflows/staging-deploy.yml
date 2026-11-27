@@ -1,0 +1,76 @@
+name: BankingAIPlatform Staging Deployment (Optional CI/CD Runner)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_provisioning:
+        description: "Type DEPLOY_STAGING to authorize AWS resource provisioning"
+        required: true
+        default: "VALIDATE_ONLY"
+      aws_region:
+        description: "Target AWS Region"
+        required: true
+        default: "us-east-1"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate-and-deploy:
+    name: Staging Validation & Controlled Deployment
+    runs-on: ubuntu-latest
+    env:
+      BANKING_AI_DEPLOY_ENV: GITHUB_ACTIONS
+      ENVIRONMENT: staging
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Backend & IaC Verification
+        run: |
+          pip install -r backend/requirements.txt pytest pytest-asyncio aiosqlite
+          cd backend && python -m pytest tests/ -q
+          cd .. && python scripts/security_iac_audit.py
+
+      - name: Run Frontend Verification
+        run: |
+          cd frontend && npm ci && npm test -- --run && npm run lint && npm run build
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+
+      - name: Terraform Static Validate
+        run: |
+          cd infrastructure/terraform
+          terraform init -backend=false
+          terraform validate
+
+      - name: Configure AWS Credentials (OIDC)
+        if: inputs.confirm_provisioning == 'DEPLOY_STAGING'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_STAGING_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Provision Staging & Deploy Containers
+        if: inputs.confirm_provisioning == 'DEPLOY_STAGING'
+        run: |
+          cd infrastructure/terraform
+          terraform init
+          terraform workspace select staging || terraform workspace new staging
+          terraform plan -var="environment=staging" -var="aws_region=${{ inputs.aws_region }}" -var="db_password=${{ secrets.STAGING_DB_PASSWORD }}" -out=staging.tfplan
+          terraform apply -auto-approve staging.tfplan

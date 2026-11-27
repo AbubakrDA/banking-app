@@ -1,0 +1,217 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:506d1b54-1b1b-4a53-80eb-dc86c0627e2a",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-11-24T18:49:37.105600+00:00",
+    "tools": [
+      {
+        "vendor": "BankingAIPlatform Engineering",
+        "name": "banking-ai-platform-sbom-generator",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "bom-ref": "pkg:banking-ai-platform/platform@1.0.0",
+      "type": "application",
+      "name": "BankingAIPlatform Enterprise AI Platform",
+      "version": "1.0.0",
+      "description": "Enterprise AI Customer Support & Business Intelligence Platform",
+      "licenses": [
+        {
+          "license": {
+            "id": "Proprietary"
+          }
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:pypi/fastapi@0.115.0",
+      "type": "library",
+      "name": "fastapi",
+      "version": "0.115.0",
+      "purl": "pkg:pypi/fastapi",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/uvicorn@0.32.0",
+      "type": "library",
+      "name": "uvicorn",
+      "version": "0.32.0",
+      "purl": "pkg:pypi/uvicorn",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/pydantic@2.10.0",
+      "type": "library",
+      "name": "pydantic",
+      "version": "2.10.0",
+      "purl": "pkg:pypi/pydantic",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/pydantic-settings@2.6.0",
+      "type": "library",
+      "name": "pydantic-settings",
+      "version": "2.6.0",
+      "purl": "pkg:pypi/pydantic-settings",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/sqlalchemy@2.0.36",
+      "type": "library",
+      "name": "sqlalchemy",
+      "version": "2.0.36",
+      "purl": "pkg:pypi/sqlalchemy",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/asyncpg@0.30.0",
+      "type": "library",
+      "name": "asyncpg",
+      "version": "0.30.0",
+      "purl": "pkg:pypi/asyncpg",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/alembic@1.14.0",
+      "type": "library",
+      "name": "alembic",
+      "version": "1.14.0",
+      "purl": "pkg:pypi/alembic",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/redis@5.2.0",
+      "type": "library",
+      "name": "redis",
+      "version": "5.2.0",
+      "purl": "pkg:pypi/redis",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/celery@5.4.0",
+      "type": "library",
+      "name": "celery",
+      "version": "5.4.0",
+      "purl": "pkg:pypi/celery",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/pgvector@0.3.6",
+      "type": "library",
+      "name": "pgvector",
+      "version": "0.3.6",
+      "purl": "pkg:pypi/pgvector",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/httpx@0.28.0",
+      "type": "library",
+      "name": "httpx",
+      "version": "0.28.0",
+      "purl": "pkg:pypi/httpx",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/python-multipart@0.0.19",
+      "type": "library",
+      "name": "python-multipart",
+      "version": "0.0.19",
+      "purl": "pkg:pypi/python-multipart",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/pytest@8.3.0",
+      "type": "library",
+      "name": "pytest",
+      "version": "8.3.0",
+      "purl": "pkg:pypi/pytest",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/pytest-asyncio@0.24.0",
+      "type": "library",
+      "name": "pytest-asyncio",
+      "version": "0.24.0",
+      "purl": "pkg:pypi/pytest-asyncio",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/pytest-cov@6.0.0",
+      "type": "library",
+      "name": "pytest-cov",
+      "version": "6.0.0",
+      "purl": "pkg:pypi/pytest-cov",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/ruff@0.8.0",
+      "type": "library",
+      "name": "ruff",
+      "version": "0.8.0",
+      "purl": "pkg:pypi/ruff",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/mypy@1.13.0",
+      "type": "library",
+      "name": "mypy",
+      "version": "1.13.0",
+      "purl": "pkg:pypi/mypy",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:pypi/aiosqlite@0.20.0",
+      "type": "library",
+      "name": "aiosqlite",
+      "version": "0.20.0",
+      "purl": "pkg:pypi/aiosqlite",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:npm/clsx@2.1.1",
+      "type": "library",
+      "name": "clsx",
+      "version": "2.1.1",
+      "purl": "pkg:npm/clsx",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:npm/lucide-react@0.469.0",
+      "type": "library",
+      "name": "lucide-react",
+      "version": "0.469.0",
+      "purl": "pkg:npm/lucide-react",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:npm/react@18.3.1",
+      "type": "library",
+      "name": "react",
+      "version": "18.3.1",
+      "purl": "pkg:npm/react",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:npm/react-dom@18.3.1",
+      "type": "library",
+      "name": "react-dom",
+      "version": "18.3.1",
+      "purl": "pkg:npm/react-dom",
+      "scope": "required"
+    },
+    {
+      "bom-ref": "pkg:npm/tailwind-merge@2.6.0",
+      "type": "library",
+      "name": "tailwind-merge",
+      "version": "2.6.0",
+      "purl": "pkg:npm/tailwind-merge",
+      "scope": "required"
+    }
+  ]
+}

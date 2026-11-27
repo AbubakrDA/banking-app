@@ -1,0 +1,60 @@
+# BankingAIPlatform — .gitignore
+
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+.next/
+out/
+
+# Environment and Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+secrets/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Testing and Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+.vitest_cache/
+coverage/
+playwright-report/
+test-results/
+
+# Temporary & Data
+*.log
+.run/
+tmp/
+temp/
+quarantine/
+uploads/
+storage/
+backend/app/storage_data/
+
+# Keep evidence directories
+!engineering/evidence/**/.gitkeep
+*.db
+*.sqlite*
+tb.txt
