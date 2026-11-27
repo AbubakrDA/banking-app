@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.auth import AuthenticatedUser, require_roles
+from app.core.auth import AuthenticatedUser, require_roles, require_surface
 from app.models.banking import BankTransfer
 from app.schemas.envelope import APIResponse
 from app.schemas.banking import BankTransferRead, ApprovalDecisionRequest
@@ -16,6 +16,7 @@ router = APIRouter()
 @router.get("", response_model=APIResponse[List[BankTransferRead]])
 async def list_pending_approvals(
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("risk_officer", "admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[List[BankTransferRead]]:
