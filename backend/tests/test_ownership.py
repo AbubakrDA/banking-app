@@ -68,8 +68,8 @@ async def test_account_ownership_and_staff_override_reason(client: AsyncClient) 
             )
         ).scalars().first()
         assert audit_entry is not None
-        assert audit_entry.details.get("staff_access") is True
-        assert audit_entry.details.get("reason") == "Customer dispute investigation"
+        assert audit_entry.details.get("flagged_staff_access") is True
+        assert audit_entry.details.get("access_reason") == "Customer dispute investigation"
         break
 
     # 5. Risk officer cannot transfer -> 403

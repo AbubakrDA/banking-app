@@ -41,7 +41,6 @@ async def test_tenants_current_requires_auth_and_loads_from_db(client: AsyncClie
                 name="Khartoum National Bank",
                 slug="khartoum-national",
                 business_mode="banking",
-                status="active",
             )
         )
         await db.commit()
@@ -59,27 +58,45 @@ async def test_tenants_current_requires_auth_and_loads_from_db(client: AsyncClie
 
 
 def test_every_api_route_declares_surface_and_roles() -> None:
+    from fastapi.routing import _IncludedRouter
     from app.main import app
 
     public_allowlist = {
         "/api/v1/health",
-        "/api/v1/health/live",
-        "/api/v1/health/ready",
         "/api/v1/auth/login",
     }
 
+    def iter_api_routes(routes, prefix=""):
+        for rt in routes:
+            if isinstance(rt, APIRoute):
+                yield prefix + rt.path, rt
+            elif isinstance(rt, _IncludedRouter):
+                p = prefix + (rt.include_context.prefix or "")
+                yield from iter_api_routes(rt.original_router.routes, p)
+
+    def collect_surface_and_roles(dep):
+        s = getattr(dep.call, "__surface__", None)
+        r = getattr(dep.call, "__roles__", None)
+        for sub in dep.dependencies:
+            ss, rr = collect_surface_and_roles(sub)
+            s = s or ss
+            r = r or rr
+        return s, r
+
+    inspected = 0
     missing = []
-    for route in app.routes:
-        if not isinstance(route, APIRoute):
+    for path, route in iter_api_routes(app.routes):
+        if not path.startswith("/api/v1"):
             continue
-        if not route.path.startswith("/api/v1"):
-            continue
-        if route.path in public_allowlist:
+        inspected += 1
+        if path in public_allowlist:
             continue
 
-        surface = getattr(route.endpoint, "__surface__", None)
-        roles = getattr(route.endpoint, "__roles__", None)
+        surface, roles = collect_surface_and_roles(route.dependant)
         if not surface or not roles:
-            missing.append(f"{','.join(sorted(route.methods or []))} {route.path} (surface={surface}, roles={roles})")
+            missing.append(
+                f"{','.join(sorted(route.methods or []))} {path} (surface={surface}, roles={roles})"
+            )
 
+    assert inspected >= 30
     assert missing == [], f"Routes missing declared surface or roles: {missing}"

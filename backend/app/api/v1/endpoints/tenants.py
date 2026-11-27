@@ -37,7 +37,7 @@ async def get_current_tenant(
         tenant_id=tenant.id,
         name=tenant.name,
         business_mode=tenant.business_mode,
-        status=tenant.status,
+        status="active" if tenant.is_active else "inactive",
     )
     return APIResponse.ok(
         data=data,

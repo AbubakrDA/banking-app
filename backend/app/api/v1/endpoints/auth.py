@@ -8,7 +8,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import hash_password, verify_password, create_access_token
-from app.core.auth import get_current_user, require_roles, AuthenticatedUser, STAFF_ROLES
+from app.core.auth import require_roles, require_surface, AuthenticatedUser, STAFF_ROLES, BANKING_ROLES
 from app.models.user import User
 from app.schemas.envelope import APIResponse
 from app.schemas.auth import LoginRequest, TokenResponse, UserRead, UserCreate
@@ -76,7 +76,8 @@ async def login(
 @router.get("/me", response_model=APIResponse[UserRead])
 async def get_current_user_profile(
     request: Request,
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    _surface: AuthenticatedUser = Depends(require_surface("both")),
+    current_user: AuthenticatedUser = Depends(require_roles(*BANKING_ROLES)),
 ) -> APIResponse[UserRead]:
     user_data = UserRead(
         id=current_user.id,
@@ -96,7 +97,8 @@ async def get_current_user_profile(
 @router.get("/users", response_model=APIResponse[List[UserRead]])
 async def list_tenant_users(
     request: Request,
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
+    current_user: AuthenticatedUser = Depends(require_roles("admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[List[UserRead]]:
     # Strict Tenant Scoping: query only users belonging to caller's tenant_id
@@ -128,7 +130,8 @@ async def list_tenant_users(
 async def create_tenant_user(
     new_user: UserCreate,
     request: Request,
-    current_user: AuthenticatedUser = Depends(require_roles("admin", "owner")),
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
+    current_user: AuthenticatedUser = Depends(require_roles("admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[UserRead]:
     # Check for duplicate email in this tenant
