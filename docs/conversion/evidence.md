@@ -35,3 +35,10 @@
 - Updated `BankingToolGateway`, `BankingAIAgent`, and `POST /api/v1/chat` so all AI tool calls route through `BankingService` with RBAC, ownership, and audit logging.
 - Command: `python -m pytest tests/test_banking_ai.py -v`
 - Result: `3 passed in 0.43s`
+
+## Phase E — Two Frontend Apps (`apps/customer`, `apps/staff`) & `packages/shared`
+- Created `packages/shared/` (`types.ts`, `apiClient.ts` with in-memory token store only & `Idempotency-Key`/`X-Access-Reason` headers, `translations.ts` with EN/AR + RTL direction).
+- Created `apps/customer/` (login, biometric/PIN background lock + privacy shield, accounts/balances in minor units, transactions, idempotent transfers, card block/unblock, bilingual AI chat, Capacitor config).
+- Created `apps/staff/` (separate login & build with zero imports from `apps/customer/`, 10-minute idle timeout, written-reason customer search, risk alerts, approvals, audit chain verify, HR/Marketing policy-only restricted view).
+- Command: `npm.cmd run typecheck; npm.cmd test; npm.cmd run build`
+- Result: `apps/customer`: `3 passed`, `tsc` & `vite build` passed; `apps/staff`: `3 passed`, `tsc` & `vite build` passed.
