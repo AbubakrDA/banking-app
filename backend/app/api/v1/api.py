@@ -3,15 +3,21 @@ from app.api.v1.endpoints import (
     health,
     tenants,
     auth,
+    accounts,
+    transactions,
+    transfers,
+    cards,
+    customers,
+    risk,
+    approvals,
+    policies,
+    audit,
+    admin,
     chat,
     documents,
     knowledge,
-    memory,
-    analytics,
     tools,
     enterprise,
-    infrastructure,
-    backup,
 )
 
 api_router = APIRouter()
@@ -19,12 +25,18 @@ api_router = APIRouter()
 api_router.include_router(health.router, tags=["Health"])
 api_router.include_router(tenants.router, prefix="/tenants", tags=["Tenants"])
 api_router.include_router(auth.router, prefix="/auth", tags=["Auth & RBAC"])
-api_router.include_router(chat.router, prefix="/chat", tags=["Chat & Agent"])
-api_router.include_router(documents.router, prefix="/documents", tags=["Document Intelligence"])
-api_router.include_router(knowledge.router, prefix="/knowledge", tags=["Knowledge Base & RAG"])
-api_router.include_router(memory.router, prefix="/memory", tags=["Customer Memory"])
-api_router.include_router(analytics.router, prefix="/analytics", tags=["Admin Intelligence & Analytics"])
+api_router.include_router(accounts.router, prefix="/accounts", tags=["Banking Accounts"])
+api_router.include_router(transactions.router, prefix="/transactions", tags=["Banking Transactions"])
+api_router.include_router(transfers.router, prefix="/transfers", tags=["Banking Transfers"])
+api_router.include_router(cards.router, prefix="/cards", tags=["Banking Cards"])
+api_router.include_router(customers.router, prefix="/customers", tags=["Banking Customers"])
+api_router.include_router(risk.router, prefix="/risk", tags=["Risk & Alerts"])
+api_router.include_router(approvals.router, prefix="/approvals", tags=["Human Approvals"])
+api_router.include_router(policies.router, prefix="/policies", tags=["Bank Policies & RAG"])
+api_router.include_router(audit.router, prefix="/audit", tags=["Audit Log"])
+api_router.include_router(admin.router, prefix="/admin", tags=["Banking Admin"])
+api_router.include_router(chat.router, prefix="/chat", tags=["Bilingual Banking Chat"])
+api_router.include_router(documents.router, prefix="/documents", tags=["Document Ingestion"])
+api_router.include_router(knowledge.router, prefix="/knowledge", tags=["Knowledge Base"])
 api_router.include_router(tools.router, prefix="/tools", tags=["Tools Gateway"])
 api_router.include_router(enterprise.router, prefix="/enterprise", tags=["Enterprise Administration"])
-api_router.include_router(infrastructure.router, prefix="/infrastructure", tags=["Cloud Infrastructure & Telemetry"])
-api_router.include_router(backup.router, prefix="/backup", tags=["Backup & Disaster Recovery"])

@@ -32,8 +32,8 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)
     full_name: str
-    role: str = Field(default="agent", description="owner | admin | agent | customer")
+    role: str = Field(default="employee", description="customer | employee | risk_officer | admin")
 
 
 class UserUpdateRole(BaseModel):
-    role: str = Field(description="owner | admin | agent | customer")
+    role: str = Field(description="customer | employee | risk_officer | admin")

@@ -38,8 +38,8 @@ async def test_tampered_token_rejected(client: AsyncClient) -> None:
     valid_token = create_access_token(
         subject="user_123",
         tenant_id="tenant_01",
-        role="agent",
-        email="agent@test.com",
+        role="employee",
+        email="employee@test.com",
     )
     # Tamper with the payload signature
     tampered_token = valid_token[:-4] + "XXXX"
@@ -59,8 +59,8 @@ async def test_expired_token_rejected(client: AsyncClient) -> None:
     expired_token = create_access_token(
         subject="user_123",
         tenant_id="tenant_01",
-        role="agent",
-        email="agent@test.com",
+        role="employee",
+        email="employee@test.com",
         expires_delta=timedelta(seconds=-10),  # Expired in past
     )
     response = await client.get(
@@ -72,12 +72,12 @@ async def test_expired_token_rejected(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_rbac_admin_vs_agent_permissions(client: AsyncClient) -> None:
-    # 1. Agent token attempting admin action
+    # 1. Employee token attempting admin action
     agent_token = create_access_token(
-        subject="agent_001",
+        subject="emp_001",
         tenant_id="tenant_alpha",
-        role="agent",
-        email="agent@alpha.com",
+        role="employee",
+        email="emp@alpha.com",
     )
     response = await client.post(
         "/api/v1/auth/users",
@@ -86,7 +86,7 @@ async def test_rbac_admin_vs_agent_permissions(client: AsyncClient) -> None:
             "email": "newbie@alpha.com",
             "password": "securepassword123",
             "full_name": "New Staff Member",
-            "role": "agent",
+            "role": "employee",
         },
     )
     assert response.status_code == 403
@@ -108,7 +108,7 @@ async def test_rbac_admin_vs_agent_permissions(client: AsyncClient) -> None:
             "email": "newbie@alpha.com",
             "password": "securepassword123",
             "full_name": "New Staff Member",
-            "role": "agent",
+            "role": "employee",
         },
     )
     assert response_admin.status_code == 200
@@ -139,7 +139,7 @@ async def test_strict_multi_tenant_isolation(client: AsyncClient) -> None:
             "email": "secret_agent@company-a.com",
             "password": "password12345",
             "full_name": "Company A Staff",
-            "role": "agent",
+            "role": "employee",
         },
     )
 
@@ -191,7 +191,7 @@ def test_jwt_validation_edge_cases() -> None:
     base_payload = {
         "sub": "u1",
         "tenant_id": "t1",
-        "role": "agent",
+        "role": "employee",
         "email": "u1@test.com",
         "iss": settings.JWT_ISSUER,
         "aud": settings.JWT_AUDIENCE,
@@ -200,7 +200,7 @@ def test_jwt_validation_edge_cases() -> None:
     }
 
     # 1. Valid token
-    valid = create_access_token("u1", "t1", "agent", "u1@test.com")
+    valid = create_access_token("u1", "t1", "employee", "u1@test.com")
     assert verify_access_token(valid) is not None
 
     # 2. alg: none (signed and unsigned)
