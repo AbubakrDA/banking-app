@@ -49,6 +49,7 @@ async def approve_transfer(
     transfer_id: str,
     request: Request,
     payload: Optional[ApprovalDecisionRequest] = None,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[BankTransferRead]:
@@ -72,6 +73,7 @@ async def reject_transfer(
     transfer_id: str,
     request: Request,
     payload: Optional[ApprovalDecisionRequest] = None,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[BankTransferRead]:

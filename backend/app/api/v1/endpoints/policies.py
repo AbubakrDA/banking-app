@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.auth import AuthenticatedUser, require_roles
+from app.core.auth import AuthenticatedUser, require_roles, require_surface
 from app.models.banking import PolicyDocument
 from app.schemas.envelope import APIResponse
 from app.schemas.banking import PolicyDocumentCreate, PolicyDocumentRead, PolicyReviewRequest
