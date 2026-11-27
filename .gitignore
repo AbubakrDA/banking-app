@@ -50,7 +50,7 @@ tmp/
 temp/
 quarantine/
 uploads/
-storage/
+/storage/
 backend/app/storage_data/
 
 # Keep evidence directories

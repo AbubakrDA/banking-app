@@ -15,3 +15,11 @@
 - Added `backend/alembic/versions/015_drop_support_desk_tables.py`.
 - Command: `python -m pytest tests/test_health.py tests/test_auth_security.py -v`
 - Result: `10 passed in 0.72s`
+
+
+## Phase B — Banking Domain
+- Added `BankAccount`, `BankTransaction`, `BankTransfer`, `BankCard`, `RiskAlert`, `PolicyDocument`, `PolicyChunk` (`BigInteger` minor units).
+- Added `backend/alembic/versions/016_banking_domain_tables.py` (`down_revision = '015_drop_support_desk_tables'`).
+- Added `BankingAPI` protocol, `MockBankingAPI` (2 customers, 3 accounts, 2 cards, 10 transactions, 1 approved policy in dev/test only), and `BankingService` (ownership, staff reason + flagged audit, transfer validation, high-risk approval + `SELF_APPROVAL_FORBIDDEN`, card block/unblock, policy upload/review, allow/deny audit).
+- Command: `python -m pytest tests/test_banking_domain.py -v`
+- Result: `1 passed in 0.33s`

@@ -11,6 +11,12 @@ from app.core.logging import setup_logging
 from app.core.middleware import TenantAndLoggingMiddleware
 from app.schemas.envelope import APIResponse
 from app.api.v1.api import api_router
+from app.services.banking.service import (
+    AccessDeniedError,
+    ResourceNotFoundError,
+    ValidationRuleError,
+    ConflictRuleError,
+)
 
 
 @asynccontextmanager
@@ -80,6 +86,46 @@ def create_application() -> FastAPI:
             tenant_id=getattr(request.state, "tenant_id", None),
         )
         return JSONResponse(status_code=422, content=error_resp.model_dump())
+
+    @app.exception_handler(AccessDeniedError)
+    async def access_denied_handler(request: Request, exc: AccessDeniedError) -> JSONResponse:
+        error_resp = APIResponse.fail(
+            code="FORBIDDEN",
+            message=str(exc),
+            request_id=getattr(request.state, "request_id", None),
+            tenant_id=getattr(request.state, "tenant_id", None),
+        )
+        return JSONResponse(status_code=403, content=error_resp.model_dump())
+
+    @app.exception_handler(ResourceNotFoundError)
+    async def not_found_handler(request: Request, exc: ResourceNotFoundError) -> JSONResponse:
+        error_resp = APIResponse.fail(
+            code="NOT_FOUND",
+            message=str(exc),
+            request_id=getattr(request.state, "request_id", None),
+            tenant_id=getattr(request.state, "tenant_id", None),
+        )
+        return JSONResponse(status_code=404, content=error_resp.model_dump())
+
+    @app.exception_handler(ValidationRuleError)
+    async def validation_rule_handler(request: Request, exc: ValidationRuleError) -> JSONResponse:
+        error_resp = APIResponse.fail(
+            code="BAD_REQUEST",
+            message=str(exc),
+            request_id=getattr(request.state, "request_id", None),
+            tenant_id=getattr(request.state, "tenant_id", None),
+        )
+        return JSONResponse(status_code=400, content=error_resp.model_dump())
+
+    @app.exception_handler(ConflictRuleError)
+    async def conflict_rule_handler(request: Request, exc: ConflictRuleError) -> JSONResponse:
+        error_resp = APIResponse.fail(
+            code="CONFLICT",
+            message=str(exc),
+            request_id=getattr(request.state, "request_id", None),
+            tenant_id=getattr(request.state, "tenant_id", None),
+        )
+        return JSONResponse(status_code=409, content=error_resp.model_dump())
 
     @app.exception_handler(ValueError)
     async def value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
