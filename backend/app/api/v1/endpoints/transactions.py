@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.auth import AuthenticatedUser, require_roles, get_staff_access_reason
+from app.core.auth import AuthenticatedUser, require_roles, require_surface, get_staff_access_reason
 from app.schemas.envelope import APIResponse
 from app.schemas.banking import BankTransactionRead, PaginatedTransactionsResponse
 from app.services.banking.service import BankingService
@@ -22,6 +22,7 @@ async def list_transactions(
     end_date: Optional[datetime] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    _surface: AuthenticatedUser = Depends(require_surface("both")),
     current_user: AuthenticatedUser = Depends(require_roles("customer", "employee", "risk_officer", "admin")),
     reason: Optional[str] = Depends(get_staff_access_reason),
     db: AsyncSession = Depends(get_db),

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.auth import AuthenticatedUser, require_roles, get_staff_access_reason
+from app.core.auth import AuthenticatedUser, require_roles, require_surface, get_staff_access_reason
 from app.schemas.envelope import APIResponse
 from app.schemas.banking import BankAccountRead
 from app.services.banking.service import BankingService
@@ -14,6 +14,7 @@ router = APIRouter()
 @router.get("", response_model=APIResponse[List[BankAccountRead]])
 async def list_accounts(
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("both")),
     current_user: AuthenticatedUser = Depends(require_roles("customer", "employee", "risk_officer", "admin")),
     reason: Optional[str] = Depends(get_staff_access_reason),
     db: AsyncSession = Depends(get_db),
@@ -31,6 +32,7 @@ async def list_accounts(
 async def get_account(
     account_id: str,
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("both")),
     current_user: AuthenticatedUser = Depends(require_roles("customer", "employee", "risk_officer", "admin")),
     reason: Optional[str] = Depends(get_staff_access_reason),
     db: AsyncSession = Depends(get_db),
