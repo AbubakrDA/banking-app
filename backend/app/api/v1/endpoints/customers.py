@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.auth import AuthenticatedUser, require_roles, get_staff_access_reason
+from app.core.auth import AuthenticatedUser, require_roles, require_surface, get_staff_access_reason
 from app.models.customer import Customer
 from app.schemas.envelope import APIResponse
 from app.schemas.banking import CustomerMaskedRead
@@ -43,7 +43,8 @@ def _to_masked_customer(c: Customer) -> CustomerMaskedRead:
 @router.get("/me", response_model=APIResponse[CustomerMaskedRead])
 async def get_my_customer_profile(
     request: Request,
-    current_user: AuthenticatedUser = Depends(require_roles("customer", "employee", "risk_officer", "admin")),
+    _surface: AuthenticatedUser = Depends(require_surface("customer")),
+    current_user: AuthenticatedUser = Depends(require_roles("customer")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[CustomerMaskedRead]:
     res = await db.execute(
@@ -83,6 +84,7 @@ async def get_my_customer_profile(
 async def search_customers(
     request: Request,
     q: Optional[str] = Query(None, max_length=100),
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("employee", "risk_officer", "admin")),
     reason: Optional[str] = Depends(get_staff_access_reason),
     db: AsyncSession = Depends(get_db),

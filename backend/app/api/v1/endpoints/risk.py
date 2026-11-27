@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.auth import AuthenticatedUser, require_roles
+from app.core.auth import AuthenticatedUser, require_roles, require_surface
 from app.models.banking import RiskAlert
 from app.schemas.envelope import APIResponse
 from app.schemas.banking import RiskAlertRead
@@ -21,6 +21,7 @@ class RiskAlertUpdateRequest(BaseModel):
 @router.get("/alerts", response_model=APIResponse[List[RiskAlertRead]])
 async def list_risk_alerts(
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("risk_officer", "admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[List[RiskAlertRead]]:
@@ -50,6 +51,7 @@ async def update_risk_alert(
     alert_id: str,
     payload: RiskAlertUpdateRequest,
     request: Request,
+    _surface: AuthenticatedUser = Depends(require_surface("staff")),
     current_user: AuthenticatedUser = Depends(require_roles("risk_officer", "admin")),
     db: AsyncSession = Depends(get_db),
 ) -> APIResponse[RiskAlertRead]:
