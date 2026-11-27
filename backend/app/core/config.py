@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = Field(default="banking-ai-platform-dev-secret-key-change-in-production-min32chars")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    STAFF_IDLE_TIMEOUT_MINUTES: int = Field(default=10, ge=1)
     JWT_ISSUER: str = Field(default="banking-ai-platform-auth")
     JWT_AUDIENCE: str = Field(default="banking-ai-platform-api")
     KEYCLOAK_JWKS_URL: str | None = Field(default=None)
@@ -60,6 +61,13 @@ class Settings(BaseSettings):
     # Banking Domain & AI Stub
     HIGH_RISK_TRANSFER_MINOR: int = Field(default=100_000)
     LLM_PROVIDER: str = Field(default="stub")
+    ENABLE_CROSS_BORDER_TRANSFERS: bool = Field(default=False)
+
+    # Bank-Selectable Integrations (all off by default)
+    ENABLE_MOBILE_MONEY_INTEGRATION: bool = Field(default=False)
+    MOBILE_MONEY_PROVIDER: str | None = Field(default=None)
+    ENABLE_AGENT_NETWORK_INTEGRATION: bool = Field(default=False)
+    AGENT_NETWORK_PROVIDER: str | None = Field(default=None)
 
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
