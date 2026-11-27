@@ -43,6 +43,8 @@ class TransferCreateRequest(BaseModel):
     amount_minor: int = Field(..., gt=0, description="Transfer amount in integer minor units (must be > 0)")
     currency: str = Field("USD", min_length=3, max_length=3)
     reference: Optional[str] = Field(None, max_length=255)
+    idempotency_key: Optional[str] = Field(None, max_length=128)
+    is_cross_border: bool = False
 
 
 class BankTransferRead(BaseModel):
@@ -60,6 +62,8 @@ class BankTransferRead(BaseModel):
     risk_score: int
     approved_by_user_id: Optional[str] = None
     rejection_reason: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    is_cross_border: bool = False
     created_at: datetime
 
 

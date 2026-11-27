@@ -50,6 +50,8 @@ class BankTransfer(TenantScopedModel):
     risk_score: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     approved_by_user_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     rejection_reason: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    idempotency_key: Mapped[Optional[str]] = mapped_column(String(128), nullable=True, index=True)
+    is_cross_border: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class BankCard(TenantScopedModel):

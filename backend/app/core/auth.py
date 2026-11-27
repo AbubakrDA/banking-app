@@ -1,11 +1,11 @@
-from typing import Callable, Union, Sequence, Optional
+from typing import Callable, Union, Sequence, Optional, Literal
 from fastapi import Depends, Header, HTTPException, status, Request, Query
 from app.core.database import tenant_context_var
 from app.core.security import verify_access_token
 
 # Single source of truth for banking RBAC roles (default deny for anything else)
-BANKING_ROLES = frozenset({"customer", "employee", "risk_officer", "admin"})
-STAFF_ROLES = frozenset({"employee", "risk_officer", "admin"})
+BANKING_ROLES = frozenset({"customer", "employee", "risk_officer", "admin", "hr", "marketing"})
+STAFF_ROLES = frozenset({"employee", "risk_officer", "admin", "hr", "marketing"})
 
 
 class AuthenticatedUser:
@@ -85,3 +85,22 @@ def get_staff_access_reason(
     """Extracts written access reason from X-Access-Reason header or ?reason= query param."""
     val = (x_access_reason or reason or "").strip()
     return val or None
+
+
+def require_surface(surface: Literal["customer", "staff", "both"]) -> Callable[..., AuthenticatedUser]:
+    """Enforces that a route only accepts tokens belonging to its declared surface."""
+
+    def surface_checker(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
+        if surface == "customer" and current_user.role != "customer":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: route is restricted to the customer surface",
+            )
+        if surface == "staff" and current_user.role not in STAFF_ROLES:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: route is restricted to the staff surface",
+            )
+        return current_user
+
+    return surface_checker

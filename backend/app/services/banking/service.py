@@ -236,7 +236,33 @@ class BankingService:
         amount_minor: int,
         currency: str,
         reference: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
+        is_cross_border: bool = False,
     ) -> BankTransfer:
+        if is_cross_border and not settings.ENABLE_CROSS_BORDER_TRANSFERS:
+            await cls.record_audit(
+                db,
+                user,
+                "TRANSFER_CREATE",
+                f"transfer:{from_account_id}",
+                "DENIED",
+                {"reason": "cross_border_disabled"},
+            )
+            await db.commit()
+            raise AccessDeniedError("Cross-border transfers are disabled until sanctions review is approved.")
+
+        if idempotency_key:
+            existing_res = await db.execute(
+                select(BankTransfer).where(
+                    BankTransfer.tenant_id == user.tenant_id,
+                    BankTransfer.requested_by_user_id == user.id,
+                    BankTransfer.idempotency_key == idempotency_key,
+                )
+            )
+            existing_xfer = existing_res.scalar_one_or_none()
+            if existing_xfer is not None:
+                return existing_xfer
+
         if amount_minor <= 0:
             raise ValidationRuleError("Transfer amount must be positive integer minor units.")
         if from_account_id == to_account_id:
@@ -281,6 +307,8 @@ class BankingService:
             reference=reference,
             status="pending_approval" if is_high_risk else "completed",
             risk_score=risk_score,
+            idempotency_key=idempotency_key,
+            is_cross_border=is_cross_border,
         )
         db.add(transfer)
 
