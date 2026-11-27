@@ -23,3 +23,9 @@
 - Added `BankingAPI` protocol, `MockBankingAPI` (2 customers, 3 accounts, 2 cards, 10 transactions, 1 approved policy in dev/test only), and `BankingService` (ownership, staff reason + flagged audit, transfer validation, high-risk approval + `SELF_APPROVAL_FORBIDDEN`, card block/unblock, policy upload/review, allow/deny audit).
 - Command: `python -m pytest tests/test_banking_domain.py -v`
 - Result: `1 passed in 0.33s`
+
+## Phase C — Banking API Routes (`/api/v1`), Surfaces, Idempotency & Integrations
+- Added `/api/v1/accounts`, `/transactions`, `/transfers`, `/cards`, `/customers`, `/risk`, `/approvals`, `/policies`, `/audit`, `/admin`, `/integrations`.
+- Added `require_surface("customer" | "staff" | "both")` on every banking route, `hr` and `marketing` department isolation, configurable `STAFF_IDLE_TIMEOUT_MINUTES` (default 10m), `Idempotency-Key` deduplication on transfers, `ENABLE_CROSS_BORDER_TRANSFERS` feature flag (default `False`), and `IntegrationProvider` registry (`MobileMoneyProvider`, `AgentNetworkProvider`, `StubProvider`, startup validation).
+- Command: `python -m pytest tests/test_health.py tests/test_auth_security.py tests/test_banking_domain.py tests/test_banking_rbac_matrix.py -v`
+- Result: `14 passed in 1.31s`
