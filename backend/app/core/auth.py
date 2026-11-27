@@ -75,15 +75,17 @@ def require_roles(*allowed_roles: Union[str, Sequence[str]]) -> Callable[..., Au
             )
         return current_user
 
+    role_checker.__roles__ = frozenset(flat_roles)  # type: ignore[attr-defined]
     return role_checker
 
 
 def get_staff_access_reason(
+    x_override_reason: Optional[str] = Header(default=None, alias="X-Override-Reason"),
     x_access_reason: Optional[str] = Header(default=None, alias="X-Access-Reason"),
     reason: Optional[str] = Query(default=None),
 ) -> Optional[str]:
-    """Extracts written access reason from X-Access-Reason header or ?reason= query param."""
-    val = (x_access_reason or reason or "").strip()
+    """Extracts written access reason from X-Override-Reason, X-Access-Reason, or ?reason=."""
+    val = (x_override_reason or x_access_reason or reason or "").strip()
     return val or None
 
 
@@ -103,4 +105,5 @@ def require_surface(surface: Literal["customer", "staff", "both"]) -> Callable[.
             )
         return current_user
 
+    surface_checker.__surface__ = surface  # type: ignore[attr-defined]
     return surface_checker
