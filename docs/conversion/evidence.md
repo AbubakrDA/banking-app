@@ -29,3 +29,9 @@
 - Added `require_surface("customer" | "staff" | "both")` on every banking route, `hr` and `marketing` department isolation, configurable `STAFF_IDLE_TIMEOUT_MINUTES` (default 10m), `Idempotency-Key` deduplication on transfers, `ENABLE_CROSS_BORDER_TRANSFERS` feature flag (default `False`), and `IntegrationProvider` registry (`MobileMoneyProvider`, `AgentNetworkProvider`, `StubProvider`, startup validation).
 - Command: `python -m pytest tests/test_health.py tests/test_auth_security.py tests/test_banking_domain.py tests/test_banking_rbac_matrix.py -v`
 - Result: `14 passed in 1.31s`
+
+## Phase D — Bilingual AI Layer, Guardrails & Approved Policy RAG
+- Added `language.py` (`ar` / `en` / `mixed` detector), `intent.py` (rule-based intents & entity extraction), `provider.py` (`LLMProvider` protocol + `StubLLMProvider` with zero vendor SDK/API keys), `retrieval.py` (approved-only `PolicyDocument` RAG + AR/EN safe abstention), and updated `prompt_guard.py` (AR/EN prompt injection, cross-customer refusal, account/national-ID output masking).
+- Updated `BankingToolGateway`, `BankingAIAgent`, and `POST /api/v1/chat` so all AI tool calls route through `BankingService` with RBAC, ownership, and audit logging.
+- Command: `python -m pytest tests/test_banking_ai.py -v`
+- Result: `3 passed in 0.43s`

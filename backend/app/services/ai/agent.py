@@ -1,95 +1,154 @@
 from typing import Dict, Any, List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.auth import AuthenticatedUser
+from app.services.ai.language import detect_language
+from app.services.ai.intent import classify_intent_and_extract
 from app.services.ai.prompt_guard import PromptGuard
-from app.services.ai.intent_sentiment import IntentAndSentimentAnalyzer, IntentType, SentimentType
+from app.services.ai.provider import LLMProvider, StubLLMProvider
+from app.services.ai.retrieval import PolicyRetrievalService
+from app.services.banking.service import BankingService
+from app.services.tools.gateway import BankingToolGateway
 
 
-class CustomerSupportAgent:
-    """
-    Controlled Customer Support AI Agent.
-    Grounded in authorized Business Data Hub information and customer memory.
-    Enforces strict role isolation and human handover triggers.
-    """
+class BankingAIAgent:
+    """Bilingual (AR/EN/Mixed) Banking AI orchestrator using typed tools & approved policy RAG."""
+
+    provider: LLMProvider = StubLLMProvider()
 
     @classmethod
-    async def process_turn(
+    async def handle_message(
         cls,
-        user_message: str,
-        customer_name: str,
-        business_mode: str,
-        working_memory: Optional[str] = None,
-        episodic_memory: Optional[List[str]] = None,
-        context_data: Optional[Dict[str, Any]] = None,
+        db: AsyncSession,
+        user: AuthenticatedUser,
+        message: str,
+        *,
+        staff_reason: Optional[str] = None,
     ) -> Dict[str, Any]:
-        # 1. Layer 1: Prompt Injection Guard
-        is_valid, error = PromptGuard.validate_user_input(user_message)
+        lang = detect_language(message)
+        is_valid, err = PromptGuard.validate_user_input(message)
         if not is_valid:
+            await BankingService.record_audit(
+                db, user, "AI_CHAT_BLOCKED", "chat:guard", "DENIED", {"reason": err}
+            )
+            await db.commit()
+            reply = (
+                "تم رفض الطلب لاعتبارات أمنية أو لانتهاك سياسة الوصول."
+                if lang == "ar"
+                else (err or "Request blocked by security guardrails.")
+            )
             return {
-                "response": "I apologize, but your message could not be processed due to a security policy violation.",
-                "sources": [],
-                "intent": "unknown",
-                "sentiment": "neutral",
-                "should_escalate": False,
-                "is_security_violation": True,
-                "security_error": error,
+                "reply": reply,
+                "language": lang,
+                "intent": "blocked",
+                "entities": {},
+                "citations": [],
+                "blocked": True,
+                "tool_used": None,
             }
 
-        # 2. Intent & Sentiment Analysis
-        intent, sentiment, _ = IntentAndSentimentAnalyzer.analyze(user_message)
+        classified = classify_intent_and_extract(message)
+        intent = classified.intent
+        citations: List[Dict[str, Any]] = []
+        tool_used: Optional[str] = None
 
-        # 3. Grounded Context Reasoning
-        sources = []
-        should_escalate = False
-        escalation_reason = None
-
-        if sentiment == "frustrated" or intent == "complaint":
-            should_escalate = True
-            escalation_reason = "Customer expressed frustration or filed a complaint regarding order/service issue."
-            response = (
-                f"I understand your frustration, {customer_name}, and I sincerely apologize for the inconvenience. "
-                "I am immediately escalating this conversation to a senior support specialist who will review your details "
-                "and assist you directly."
+        if intent == "balance":
+            tool_used = "get_balances"
+            res = await BankingToolGateway.execute(
+                tool_name=tool_used, db=db, user=user, params={"reason": staff_reason}
             )
-            sources.append({"source": "escalation_policy", "type": "policy", "detail": "Automatic Handover Protocol"})
+            accts = res["accounts"]
+            if not accts:
+                reply = "لا توجد حسابات مرتبطة بملفك." if lang == "ar" else "No accounts found for your profile."
+            else:
+                summary = "; ".join(f"{a['account_number_masked']}: {a['balance_formatted']}" for a in accts)
+                reply = (
+                    f"أرصدة حساباتك الحالية: {summary}"
+                    if lang == "ar"
+                    else f"Your current account balances: {summary}"
+                )
 
-        elif intent == "reschedule_appointment":
-            response = (
-                f"Hello {customer_name}! I checked our schedule in the Business Data Hub. "
-                "We have openings available on Friday at 9:30 AM and 11:00 AM. "
-                "Would either of those work for you to reschedule?"
+        elif intent == "transactions":
+            tool_used = "get_recent_transactions"
+            res = await BankingToolGateway.execute(
+                tool_name=tool_used, db=db, user=user, params={"reason": staff_reason}
             )
-            sources.append({"source": "appointments_calendar", "type": "business_hub", "detail": "Live Calendar Openings"})
-            sources.append({"source": "service_policy.pdf", "type": "knowledge_base", "detail": "Rescheduling window: 24h"})
+            txs = res["transactions"]
+            if not txs:
+                reply = "لا توجد معاملات حديثة." if lang == "ar" else "No recent transactions found."
+            else:
+                lines = ", ".join(f"{t['description']} ({t['amount_formatted']})" for t in txs[:3])
+                reply = (
+                    f"آخر معاملاتك: {lines}"
+                    if lang == "ar"
+                    else f"Recent transactions: {lines}"
+                )
 
-        elif intent == "product_inquiry":
-            response = (
-                f"Hi {customer_name}, we have that product in stock in our catalog. "
-                "Our current price is $14.50 with same-day order processing available."
-            )
-            sources.append({"source": "business_products", "type": "business_hub", "detail": "Stock: In Stock, SKU: Active"})
+        elif intent == "card_block":
+            tool_used = "block_card"
+            res = await BankingToolGateway.execute(tool_name=tool_used, db=db, user=user)
+            if res.get("blocked"):
+                reply = (
+                    f"تم حظر بطاقتك المنتهية بـ {res['card_last4']} بنجاح."
+                    if lang == "ar"
+                    else f"Your card ending in {res['card_last4']} has been blocked."
+                )
+            else:
+                reply = "لم يتم العثور على بطاقة نشطة." if lang == "ar" else "No card found to block."
 
-        elif intent == "order_status":
-            response = (
-                f"Hello {customer_name}, your recent order is currently in transit with delivery expected tomorrow. "
-                "You will receive a notification as soon as it is out for delivery."
+        elif intent == "transfer":
+            reply = (
+                "لإتمام التحويل بأمان، يرجى تأكيد تفاصيل التحويل عبر شاشة التحويلات."
+                if lang == "ar"
+                else "To complete a transfer safely with idempotency protection, please submit it via the Transfers screen."
             )
-            sources.append({"source": "business_orders", "type": "business_hub", "detail": "Status: Shipped"})
+
+        elif intent == "complaint":
+            reply = (
+                "تم تسجيل ملاحظتك وسيقوم فريق خدمة العملاء بمراجعتها."
+                if lang == "ar"
+                else "Your complaint has been noted and routed to branch service staff for review."
+            )
+
+        elif intent == "policy_question":
+            tool_used = "search_approved_policies"
+            res = await BankingToolGateway.execute(
+                tool_name=tool_used, db=db, user=user, params={"query": message}
+            )
+            citations = res["citations"]
+            if not citations:
+                reply = PolicyRetrievalService.abstention_for_language(lang)
+            else:
+                top = citations[0]
+                _ = await cls.provider.generate(
+                    PromptGuard.build_role_separated_messages(
+                        "Answer strictly from cited approved bank policy.",
+                        message,
+                        [c["snippet"] for c in citations],
+                    )
+                )
+                cite_tag = f"[{top['title']} — p.{top['page_number']}]"
+                reply = (
+                    f"وفقاً للسياسة المعتمدة {cite_tag}: {top['snippet']}"
+                    if lang == "ar"
+                    else f"Per approved policy {cite_tag}: {top['snippet']}"
+                )
 
         else:
-            response = (
-                f"Hello {customer_name}, thank you for contacting BankingAIPlatform support. "
-                "How may I assist you with our products or services today?"
-            )
-            sources.append({"source": "general_greeting", "type": "system", "detail": "Platform Assistance"})
+            reply = PolicyRetrievalService.abstention_for_language(lang)
 
-        # 4. Layer 3: Output Filter
-        sanitized_response, _ = PromptGuard.filter_output(response)
+        sanitized_reply, _ = PromptGuard.filter_output(reply)
+        await BankingService.record_audit(
+            db, user, "AI_CHAT_RESPONSE", "chat:turn", "SUCCESS", {"intent": intent, "language": lang, "tool_used": tool_used}
+        )
+        await db.commit()
 
         return {
-            "response": sanitized_response,
-            "sources": sources,
+            "reply": sanitized_reply,
+            "language": lang,
             "intent": intent,
-            "sentiment": sentiment,
-            "should_escalate": should_escalate,
-            "escalation_reason": escalation_reason,
-            "is_security_violation": False,
+            "entities": classified.entities,
+            "citations": citations,
+            "blocked": False,
+            "tool_used": tool_used,
         }
